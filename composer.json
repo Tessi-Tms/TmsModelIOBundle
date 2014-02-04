@@ -1,0 +1,26 @@
+{
+    "name": "tms/modelio-bundle",
+    "type": "symfony-bundle",
+    "description": "TMS ModelIOBundle",
+    "keywords": [],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "TESSI MARKETING",
+            "email": "contact@tessi.fr",
+            "homepage": "http://www.tessi.fr"
+        }
+    ],
+    "require": {
+        "php":                                 ">=5.3.3",
+        "symfony/framework-bundle":            ">=2.3",
+        "doctrine/orm":                        ">=2.2.3,<2.4-dev",
+        "doctrine/doctrine-bundle":            "1.2.*",
+        "twig/twig":                           "*",
+    },
+    "autoload": {
+        "psr-0": { "Tms\\Bundle\\ModelIOBundle": "" }
+    },
+    "target-dir": "Tms/Bundle/ModelIOBundle",
+    "minimum-stability": "dev"
+}
