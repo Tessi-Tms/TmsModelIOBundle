@@ -24,6 +24,13 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder();
 
+        $rootNode = $treeBuilder->root('tms_model_io');
+
+        $rootNode
+
+        ->end()
+        ;
+
         return $treeBuilder;
     }
 }

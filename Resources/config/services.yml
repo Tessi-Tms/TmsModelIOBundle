@@ -1,1 +1,4 @@
 services:
+    tms_model_io.handler:
+        class: Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler
+        arguments: []
