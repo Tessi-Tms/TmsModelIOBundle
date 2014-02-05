@@ -1,36 +1,57 @@
 <?php
 
+/**
+ * @author Jean-Philippe Chateau <jp.chateau@trepia.fr>
+ */
+
 namespace Tms\Bundle\ModelIOBundle\Handler;
 
+use Doctrine\Common\Persistence\ObjectManager;
 use Tms\Bundle\ModelIOBundle\Serializer\ImportExportSerializer;
 
 class ImportExportHandler
 {
-    private $fileHandler;
     private $importExportSerializer;
-    private $entityNamespace;
+    private $objectManager;
+    private $namespace;
+    private $fields;
 
     /**
      * Constructor
      *
-     * @param FileHandler $fileHandler
      * @param ImportExportSerializer $importExportSerializer
-     * @param string $entityNamespace
+     * @param ObjectManager          $objectManager
+     * @param string                 $namespace
+     * @param array                  $fields
      */
-    public function __construct(FileHandler $fileHandler, ImportExportSerializer $importExportSerializer, $entityNamespace)
+    public function __construct(ImportExportSerializer $importExportSerializer, ObjectManager $objectManager, $namespace, array $fields)
     {
-        $this->fileHandler = $fileHandler;
         $this->importExportSerializer = $importExportSerializer;
-        $this->entityNamespace = $entityNamespace;
+        $this->objectManager          = $objectManager;
+        $this->namespace              = $namespace;
+        $this->fields                 = $fields;
     }
 
-    public function import()
+    /**
+     * Export a given object
+     *
+     * @param Object $object
+     * @return array
+     */
+    public function exportObject($object)
     {
+        $classMetadata = $this->getClassMetadata();
+        $fieldMappings = $this->objectManager()->getClassMetadata($this->namespace);
 
-    }
+        $serializedEntity = array();
+        foreach ($fieldMappings as $key => $fieldMapping) {
+            if (!in_array($key, $this->fields)) {
+                continue;
+            }
 
-    public function export()
-    {
+            $serializedEntity[$key] = $classMetadata->getFieldValue($entity, $key);
+        }
 
+        return $serializedEntity;
     }
 }

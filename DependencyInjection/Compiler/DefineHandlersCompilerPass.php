@@ -19,27 +19,34 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         $configuration = $container->getParameter('tms_model_io');
+        $importExportHandlerServiceId = 'tms_model_io.handler.import_export_handler';
         $importExportServiceId = 'tms_model_io.handler.import_export';
 
-        if (!$container->hasDefinition($importExportServiceId)) {
+        if (!$container->hasDefinition($importExportHandlerServiceId) || !$container->hasDefinition($importExportServiceId)) {
             return;
         }
 
         foreach ($configuration['models'] as $modelName => $model) {
             foreach ($model['modes'] as $modeName => $mode) {
-                $serviceDefinition = new DefinitionDecorator($importExportServiceId);
+                //var_dump($mode);
+
+                $objectManager = new Reference($model['object_manager']);
+
+                $serviceDefinition = new DefinitionDecorator($importExportHandlerServiceId);
                 $serviceDefinition->isAbstract(false);
+                $serviceDefinition->replaceArgument(1, $objectManager);
                 $serviceDefinition->replaceArgument(2, $model['class']);
-                $container->setDefinition(
-                    sprintf('%s.%s.%s', $importExportServiceId, $modelName, $modeName),
-                    $serviceDefinition
+                $serviceDefinition->replaceArgument(3, $mode);
+
+                $handlerId = sprintf('%s.%s.%s', $importExportHandlerServiceId, $modelName, $modeName);
+                $container->setDefinition($handlerId, $serviceDefinition);
+
+                $importExportService = $container->getDefinition($importExportServiceId);
+                $importExportService->addMethodCall(
+                    'addHandler',
+                    array(new Reference($handlerId))
                 );
             }
         }
-
-        /*
-
-        */
-
     }
 }

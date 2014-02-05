@@ -1,18 +1,14 @@
 services:
     tms_model_io.handler.import_export:
-        class: Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler
-        arguments: [@tms_model_io.handler.file, @tms_model_io.serializer.import_export, null]
-        abstract: true
-
-    tms_model_io.handler.file:
-        class: Tms\Bundle\ModelIOBundle\Handler\FileHandler
-        arguments: [%import_directory%]
-
-    tms_model_io.serializer.import_export:
-        class: Tms\Bundle\ModelIOBundle\Serializer\ImportExportSerializer
+        class: Tms\Bundle\ModelIOBundle\Handler\ImportExport
         arguments: []
 
-    tms_model_io.form.type.import:
-        class: Tms\Bundle\ModelIOBundle\Form\Type\ImportType
-        tags:
-            - { name: form.type, alias: tms_model_io.import }
+    tms_model_io.handler.import_export_handler:
+        class: Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler
+        arguments: [@tms_model_io.serializer.import_export_serializer, null, null, null]
+        abstract: true
+        public: false
+
+    tms_model_io.serializer.import_export_serializer:
+        class: Tms\Bundle\ModelIOBundle\Serializer\ImportExportSerializer
+        arguments: []

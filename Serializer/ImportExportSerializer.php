@@ -11,9 +11,10 @@ class ImportExportSerializer
     /**
      * Serialize
      *
-     * @param mixed $data
+     * @param array $data
+     * @return string
      */
-    public function serialize($data)
+    public function serialize(array $data)
     {
         return json_encode($data);
     }
@@ -21,7 +22,8 @@ class ImportExportSerializer
     /**
      * Deserialize
      *
-     * @param mixed $data
+     * @param string $data
+     * @return array
      */
     public function deserialize($data)
     {

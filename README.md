@@ -52,14 +52,6 @@ Load the configuration file
     - { resource: @TmsModelIOBundle/Resources/config/config.yml }
 ```
 
-Finally, Load the bundle routing file
-
-```yml
-# app/config/routing.yml
-tms_model_io:
-    resource: "@TmsModelIOBundle/Controller"
-    type:     annotation
-```
 
 Configuration
 -------------
@@ -70,8 +62,9 @@ Configuration
 
 Export génère un fichier json (ou un json à envoyer ensuite)
 
-$importExportHandler->export('simple');
+importExport qui guess les hendlers par rapport à la class
 
-Import renvoie un objet du type demandé (à persister)
+->export($objects);
+->import(json);
 
-$participation = $importExportHandler->import();
+json <=> objects
