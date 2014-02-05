@@ -27,8 +27,27 @@ class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->root('tms_model_io');
 
         $rootNode
-
-        ->end()
+            ->children()
+                ->arrayNode('models')
+                    ->useAttributeAsKey('')
+                    ->prototype('array')
+                        ->children()
+                            ->scalarNode('type')->isRequired()->end()
+                            ->scalarNode('class')->isRequired()->end()
+                            ->arrayNode('modes')
+                                ->children()
+                                    ->arrayNode('simple')
+                                        ->prototype('variable')->end()
+                                    ->end()
+                                    ->arrayNode('full')
+                                        ->prototype('variable')->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
         ;
 
         return $treeBuilder;
