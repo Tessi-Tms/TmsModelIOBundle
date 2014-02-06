@@ -72,6 +72,26 @@ class ImportExport
     }
 
     /**
+     * Import
+     *
+     * @param string $content
+     * @param string $model
+     * @param string $mode
+     * @return string
+     */
+    public function import($content, $model, $mode)
+    {
+        $objects = array();
+        $deserializedObjects = $this->importExportSerializer->deserialize($content);
+        $className = $this->getHandlerClassNameByModel($model);
+        foreach ($deserializedObjects as $deserializedObject) {
+            array_push($objects, $this->guessHandler($className, $mode)->importObject($deserializedObject));
+        }
+
+        return $objects;
+    }
+
+    /**
      * Build an identifier based on the className and the mode of the Handler
      *
      * @param string $className
@@ -81,5 +101,16 @@ class ImportExport
     private function buildHandlerIndex($className, $mode)
     {
         return md5($className . $mode);
+    }
+
+    /**
+     * Get Handler ClassName By Model
+     *
+     * @param string $model
+     * @return string
+     */
+    private function getHandlerClassNameByModel($model)
+    {
+        return 'Tms\Bundle\OperationBundle\Entity\Eligibility';
     }
 }

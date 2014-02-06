@@ -97,6 +97,18 @@ class ImportExportHandler
         return $exportedObject;
     }
 
+    public function importObject($object)
+    {
+        $classMetadata = $this->objectManager->getClassMetadata($this->className);
+        $importedObject = new $this->className();
+
+        foreach ($object as $field => $value) {
+            $classMetadata->setFieldValue($importedObject, $field, $value);
+        }
+
+        return $importedObject;
+    }
+
     /**
      * Take the fields defined by the model mode and returns an array indexed by the model name
      * Example :
