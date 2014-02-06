@@ -27,16 +27,15 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
         }
 
         foreach ($configuration['models'] as $modelName => $model) {
-            foreach ($model['modes'] as $modeName => $mode) {
-                //var_dump($mode);
-
-                $objectManager = new Reference($model['object_manager']);
+            foreach ($model['modes'] as $modeName => $fields) {
+                $objectManagerReference = new Reference($model['object_manager']);
 
                 $serviceDefinition = new DefinitionDecorator($importExportHandlerServiceId);
                 $serviceDefinition->isAbstract(false);
-                $serviceDefinition->replaceArgument(1, $objectManager);
-                $serviceDefinition->replaceArgument(2, $model['class']);
-                $serviceDefinition->replaceArgument(3, $mode);
+                $serviceDefinition->replaceArgument(0, $objectManagerReference);
+                $serviceDefinition->replaceArgument(1, $model['class']);
+                $serviceDefinition->replaceArgument(2, $modeName);
+                $serviceDefinition->replaceArgument(3, $fields);
 
                 $handlerId = sprintf('%s.%s.%s', $importExportHandlerServiceId, $modelName, $modeName);
                 $container->setDefinition($handlerId, $serviceDefinition);
