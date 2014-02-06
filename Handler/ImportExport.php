@@ -57,11 +57,11 @@ class ImportExport
     /**
      * Export
      *
-     * @param array  $objects
+     * @param array|Collection  $objects
      * @param string $mode
      * @return string
      */
-    public function export(array $objects, $mode)
+    public function export($objects, $mode)
     {
         $objectsToSerialize = array();
         foreach ($objects as $object) {
