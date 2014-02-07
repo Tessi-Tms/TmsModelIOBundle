@@ -1,11 +1,11 @@
 services:
-    tms_model_io.handler.import_export:
-        class: Tms\Bundle\ModelIOBundle\Handler\ImportExport
+    tms_model_io.manager.import_export_manager:
+        class: Tms\Bundle\ModelIOBundle\Manager\ImportExportManager
         arguments: [@tms_model_io.serializer.import_export_serializer]
 
     tms_model_io.handler.import_export_handler:
         class: Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler
-        arguments: [null, null, null, null, null, @tms_model_io.handler.import_export]
+        arguments: [null, null, null, null, null, @tms_model_io.manager.import_export_manager]
         abstract: true
         public: false
 

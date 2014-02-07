@@ -20,7 +20,7 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
     {
         $configuration = $container->getParameter('tms_model_io');
         $importExportHandlerServiceId = 'tms_model_io.handler.import_export_handler';
-        $importExportServiceId = 'tms_model_io.handler.import_export';
+        $importExportServiceId = 'tms_model_io.manager.import_export_manager';
 
         if (!$container->hasDefinition($importExportHandlerServiceId) || !$container->hasDefinition($importExportServiceId)) {
             return;

@@ -4,13 +4,14 @@
  * @author Jean-Philippe Chateau <jp.chateau@trepia.fr>
  */
 
-namespace Tms\Bundle\ModelIOBundle\Handler;
+namespace Tms\Bundle\ModelIOBundle\Manager;
 
+use Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler;
 use Tms\Bundle\ModelIOBundle\Serializer\ImportExportSerializer;
 use Tms\Bundle\ModelIOBundle\Exception\HandlerNotFoundException;
 use Tms\Bundle\ModelIOBundle\Exception\HandlerClassNameNotFoundException;
 
-class ImportExport
+class ImportExportManager
 {
     private $importExportSerializer;
     private $handlers;

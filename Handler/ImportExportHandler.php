@@ -6,6 +6,7 @@
 
 namespace Tms\Bundle\ModelIOBundle\Handler;
 
+use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
 //use Doctrine\Common\Persistence\ObjectManager;
 
 class ImportExportHandler
@@ -15,26 +16,26 @@ class ImportExportHandler
     private $modelName;
     private $mode;
     private $fields;
-    private $importExport;
+    private $importExportManager;
 
     /**
      * Constructor
      *
-     * @param Object       $objectManager
-     * @param string       $className
-     * @param string       $modelName
-     * @param string       $mode
-     * @param array        $fields
-     * @param ImportExport $importExport
+     * @param Object              $objectManager
+     * @param string              $className
+     * @param string              $modelName
+     * @param string              $mode
+     * @param array               $fields
+     * @param ImportExportManager $importExportManager
      */
-    public function __construct($objectManager, $className, $modelName, $mode, array $fields, ImportExport $importExport)
+    public function __construct($objectManager, $className, $modelName, $mode, array $fields, ImportExportManager $importExportManager)
     {
-        $this->objectManager = $objectManager->getManager();
-        $this->className     = $className;
-        $this->modelName     = $modelName;
-        $this->mode          = $mode;
-        $this->fields        = $this->checkAndPrepareFields($fields);
-        $this->importExport  = $importExport;
+        $this->objectManager       = $objectManager->getManager();
+        $this->className           = $className;
+        $this->modelName           = $modelName;
+        $this->mode                = $mode;
+        $this->fields              = $this->checkAndPrepareFields($fields);
+        $this->importExportManager = $importExportManager;
     }
 
     /**
@@ -103,7 +104,7 @@ class ImportExportHandler
                 continue;
             }
 
-            $exportedField = $this->importExport->exportNoSerialization($classMetadata->getFieldValue($object, $key), $this->fields[$key]);
+            $exportedField = $this->importExportManager->exportNoSerialization($classMetadata->getFieldValue($object, $key), $this->fields[$key]);
             $exportedObject[$key] = $exportedField;
         }
 
