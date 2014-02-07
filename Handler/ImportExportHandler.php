@@ -99,7 +99,6 @@ class ImportExportHandler
 
         $associationMappings = $classMetadata->associationMappings;
         foreach ($associationMappings as $key => $associationMapping) {
-
             if (!in_array($key, array_keys($this->fields)) || !$this->fields[$key]) {
                 continue;
             }

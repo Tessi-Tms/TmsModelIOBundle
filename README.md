@@ -33,7 +33,6 @@ composer update
 Enable the bundle in your application kernel:
 
 ```php
-<?php
 // app/AppKernel.php
 
 public function registerBundles()
@@ -45,26 +44,33 @@ public function registerBundles()
 }
 ```
 
-Load the configuration file
-
-```yml
-# app/config/config.yml
-    - { resource: @TmsModelIOBundle/Resources/config/config.yml }
-```
-
-
 Configuration
 -------------
 
+Edit the configuration file.
+
+
 ```yml
 # app/config/config.yml
+
+tms_model_io:
+    models:
+       participation:                                                   # Define your own model name
+           object_manager: doctrine                                     # Tell which object manager you want to use (ex: doctrine, doctrine_mongodb)
+           class: Tms\Bundle\OperationBundle\Entity\Participation       # The class name of your object (ie: entity, document)
+           modes:
+                simple:
+                    - onlineEnabled
+                    - offlineEnabled
+                    - previewBallotBeforeDownloadEnabled
+                full:
+                    - onlineEnabled
+                    - offlineEnabled
+                    - previewBallotBeforeDownloadEnabled
+                    - eligibilities: {mode: simple}
+                    - steps: {mode: simple}
+                    - benefits: {mode: simple}
 ```
 
-Export génère un fichier json (ou un json à envoyer ensuite)
-
-importExport qui guess les hendlers par rapport à la class
-
-->export($objects);
-->import(json);
-
-json <=> objects
+You can declare two modes of IO: simple and full.
+Then, you have to declare which fields are to be imported/exported.
