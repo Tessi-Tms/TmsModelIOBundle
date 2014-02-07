@@ -122,6 +122,7 @@ class ImportExportHandler
         $importedObject = new $this->className();
 
         foreach ($object as $field => $value) {
+            //@todo check if field exists
             $classMetadata->setFieldValue($importedObject, $field, $value);
         }
 

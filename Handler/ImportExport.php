@@ -45,36 +45,20 @@ class ImportExport
      * @throws HandlerNotFoundException
      * @return ImportExportHandler
      */
-    public function guessHandler($className, $mode)
+    public function guessHandler($identifier, $mode)
     {
-        $index = $this->buildHandlerIndex($className, $mode);
-        if (!isset($this->handlers[$index])) {
-            throw new HandlerNotFoundException($className, $mode);
-        }
-
-        return $this->handlers[$index];
-    }
-
-    /**
-     * Get Handler ClassName By Model
-     *
-     * @param string $model
-     * @return string
-     */
-    private function getHandlerClassNameByModel($model)
-    {
-        $className = null;
-        foreach ($this->handlers as $handler) {
-            if ($handler->getModelName() === $model) {
-                $className = $handler->getClassName();
+        $handler = null;
+        try {
+            $handler = $this->getHandlerByModelAndMode($identifier, $mode);
+        } catch (\Exception $exception) {
+            try {
+                $handler = $this->guessHandlerByClassNameAndMode($identifier, $mode);
+            } catch (\Exception $exception) {
+                throw new \Exception($exception->getMessage());
             }
         }
 
-        if (!$className) {
-            throw new HandlerClassNameNotFoundException($model);
-        }
-
-        return $className;
+        return $handler;
     }
 
     /**
@@ -120,9 +104,8 @@ class ImportExport
     {
         $objects = array();
         $deserializedObjects = $this->importExportSerializer->deserialize($content);
-        $className = $this->getHandlerClassNameByModel($model);
         foreach ($deserializedObjects as $deserializedObject) {
-            array_push($objects, $this->guessHandler($className, $mode)->importObject($deserializedObject));
+            array_push($objects, $this->guessHandler($model, $mode)->importObject($deserializedObject));
         }
 
         return $objects;
@@ -138,5 +121,48 @@ class ImportExport
     private function buildHandlerIndex($className, $mode)
     {
         return md5($className . $mode);
+    }
+
+
+    /**
+     * Guess a handler from given className and mode
+     *
+     * @param string $className
+     * @param string $mode
+     * @throws HandlerNotFoundException
+     * @return ImportExportHandler
+     */
+    private function guessHandlerByClassNameAndMode($className, $mode)
+    {
+        $index = $this->buildHandlerIndex($className, $mode);
+        if (!isset($this->handlers[$index])) {
+            throw new HandlerNotFoundException($className, $mode);
+        }
+
+        return $this->handlers[$index];
+    }
+
+    /**
+     * Get Handler ClassName By Model and mode
+     *
+     * @param string $model
+     * @param string $mode
+     * @throws HandlerClassNameNotFoundException
+     * @return ImportExportHandler
+     */
+    private function getHandlerByModelAndMode($model, $mode)
+    {
+        $className = null;
+        foreach ($this->handlers as $handler) {
+            if ($handler->getModelName() === $model) {
+                $className = $handler->getClassName();
+            }
+        }
+
+        if (!$className) {
+            throw new HandlerClassNameNotFoundException($model);
+        }
+
+        return $this->guessHandlerByClassNameAndMode($className, $mode);
     }
 }
