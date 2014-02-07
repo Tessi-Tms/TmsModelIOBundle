@@ -12,6 +12,7 @@ class ImportExportHandler
 {
     private $objectManager;
     private $className;
+    private $modelName;
     private $mode;
     private $fields;
     private $importExport;
@@ -21,14 +22,16 @@ class ImportExportHandler
      *
      * @param Object       $objectManager
      * @param string       $className
+     * @param string       $modelName
      * @param string       $mode
      * @param array        $fields
      * @param ImportExport $importExport
      */
-    public function __construct($objectManager, $className, $mode, array $fields, ImportExport $importExport)
+    public function __construct($objectManager, $className, $modelName, $mode, array $fields, ImportExport $importExport)
     {
         $this->objectManager = $objectManager->getManager();
         $this->className     = $className;
+        $this->modelName     = $modelName;
         $this->mode          = $mode;
         $this->fields        = $this->checkAndPrepareFields($fields);
         $this->importExport  = $importExport;
@@ -42,6 +45,16 @@ class ImportExportHandler
     public function getClassName()
     {
         return $this->className;
+    }
+
+    /**
+     * Get ModelName
+     *
+     * @return string
+     */
+    public function getModelName()
+    {
+        return $this->modelName;
     }
 
     /**
@@ -90,13 +103,19 @@ class ImportExportHandler
                 continue;
             }
 
-            $exportedField = $this->importExport->export($classMetadata->getFieldValue($object, $key), $this->fields[$key]);
+            $exportedField = $this->importExport->exportNoSerialization($classMetadata->getFieldValue($object, $key), $this->fields[$key]);
             $exportedObject[$key] = $exportedField;
         }
 
         return $exportedObject;
     }
 
+    /**
+     * Import an object
+     *
+     * @param array $object
+     * @return Object
+     */
     public function importObject($object)
     {
         $classMetadata = $this->objectManager->getClassMetadata($this->className);

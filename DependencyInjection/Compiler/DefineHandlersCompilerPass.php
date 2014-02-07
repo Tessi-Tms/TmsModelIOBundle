@@ -34,8 +34,9 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
                 $serviceDefinition->isAbstract(false);
                 $serviceDefinition->replaceArgument(0, $objectManagerReference);
                 $serviceDefinition->replaceArgument(1, $model['class']);
-                $serviceDefinition->replaceArgument(2, $modeName);
-                $serviceDefinition->replaceArgument(3, $fields);
+                $serviceDefinition->replaceArgument(2, $modelName);
+                $serviceDefinition->replaceArgument(3, $modeName);
+                $serviceDefinition->replaceArgument(4, $fields);
 
                 $handlerId = sprintf('%s.%s.%s', $importExportHandlerServiceId, $modelName, $modeName);
                 $container->setDefinition($handlerId, $serviceDefinition);

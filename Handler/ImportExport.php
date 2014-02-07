@@ -8,6 +8,7 @@ namespace Tms\Bundle\ModelIOBundle\Handler;
 
 use Tms\Bundle\ModelIOBundle\Serializer\ImportExportSerializer;
 use Tms\Bundle\ModelIOBundle\Exception\HandlerNotFoundException;
+use Tms\Bundle\ModelIOBundle\Exception\HandlerClassNameNotFoundException;
 
 class ImportExport
 {
@@ -55,6 +56,28 @@ class ImportExport
     }
 
     /**
+     * Get Handler ClassName By Model
+     *
+     * @param string $model
+     * @return string
+     */
+    private function getHandlerClassNameByModel($model)
+    {
+        $className = null;
+        foreach ($this->handlers as $handler) {
+            if ($handler->getModelName() === $model) {
+                $className = $handler->getClassName();
+            }
+        }
+
+        if (!$className) {
+            throw new HandlerClassNameNotFoundException($model);
+        }
+
+        return $className;
+    }
+
+    /**
      * Export
      *
      * @param array|Collection  $objects
@@ -63,12 +86,26 @@ class ImportExport
      */
     public function export($objects, $mode)
     {
+        $objectsToSerialize = $this->exportNoSerialization($objects, $mode);
+
+        return $this->importExportSerializer->serialize($objectsToSerialize);
+    }
+
+    /**
+     * Export
+     *
+     * @param array|Collection  $objects
+     * @param string $mode
+     * @return array
+     */
+    public function exportNoSerialization($objects, $mode)
+    {
         $objectsToSerialize = array();
         foreach ($objects as $object) {
             array_push($objectsToSerialize, $this->guessHandler(get_class($object), $mode)->exportObject($object));
         }
 
-        return $this->importExportSerializer->serialize($objectsToSerialize);
+        return $objectsToSerialize;
     }
 
     /**
@@ -77,7 +114,7 @@ class ImportExport
      * @param string $content
      * @param string $model
      * @param string $mode
-     * @return string
+     * @return array
      */
     public function import($content, $model, $mode)
     {
@@ -101,16 +138,5 @@ class ImportExport
     private function buildHandlerIndex($className, $mode)
     {
         return md5($className . $mode);
-    }
-
-    /**
-     * Get Handler ClassName By Model
-     *
-     * @param string $model
-     * @return string
-     */
-    private function getHandlerClassNameByModel($model)
-    {
-        return 'Tms\Bundle\OperationBundle\Entity\Eligibility';
     }
 }
