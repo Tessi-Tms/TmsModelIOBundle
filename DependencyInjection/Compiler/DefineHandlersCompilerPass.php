@@ -27,16 +27,40 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
         }
 
         foreach ($configuration['models'] as $modelName => $model) {
-            foreach ($model['modes'] as $modeName => $fields) {
-                $objectManagerReference = new Reference($model['object_manager']);
+            $objectManagerReference = new Reference($model['object_manager']);
 
-                $serviceDefinition = new DefinitionDecorator($importExportHandlerServiceId);
-                $serviceDefinition->isAbstract(false);
-                $serviceDefinition->replaceArgument(0, $objectManagerReference);
-                $serviceDefinition->replaceArgument(1, $model['class']);
-                $serviceDefinition->replaceArgument(2, $modelName);
-                $serviceDefinition->replaceArgument(3, $modeName);
-                $serviceDefinition->replaceArgument(4, $fields);
+            // No Modes found. A default mode has to be created.
+            if (!count($model['modes'])) {
+                $modeName = 'default';
+                $serviceDefinition = $this->createImportExportHandlerService(
+                    $importExportHandlerServiceId,
+                    $objectManagerReference,
+                    $model['class'],
+                    $modelName,
+                    $modeName
+                );
+
+                $handlerId = sprintf('%s.%s.%s', $importExportHandlerServiceId, $modelName, $modeName);
+                $container->setDefinition($handlerId, $serviceDefinition);
+
+                $importExportService = $container->getDefinition($importExportServiceId);
+                $importExportService->addMethodCall(
+                    'addHandler',
+                    array(new Reference($handlerId))
+                );
+
+                continue;
+            }
+
+            foreach ($model['modes'] as $modeName => $fields) {
+                $serviceDefinition = $this->createImportExportHandlerService(
+                    $importExportHandlerServiceId,
+                    $objectManagerReference,
+                    $model['class'],
+                    $modelName,
+                    $modeName,
+                    $fields
+                );
 
                 $handlerId = sprintf('%s.%s.%s', $importExportHandlerServiceId, $modelName, $modeName);
                 $container->setDefinition($handlerId, $serviceDefinition);
@@ -48,5 +72,28 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
                 );
             }
         }
+    }
+
+    /**
+     * Creates an Import Export Handler Service
+     *
+     * @param string     $importExportHandlerServiceId
+     * @param Reference  $objectManagerReference
+     * @param string     $className
+     * @param string     $modelName
+     * @param string     $modeName
+     * @param array      $fields
+     */
+    private function createImportExportHandlerService($importExportHandlerServiceId, Reference $objectManagerReference, $className, $modelName, $modeName, $fields = array())
+    {
+        $serviceDefinition = new DefinitionDecorator($importExportHandlerServiceId);
+        $serviceDefinition->isAbstract(false);
+        $serviceDefinition->replaceArgument(0, $objectManagerReference);
+        $serviceDefinition->replaceArgument(1, $className);
+        $serviceDefinition->replaceArgument(2, $modelName);
+        $serviceDefinition->replaceArgument(3, $modeName);
+        $serviceDefinition->replaceArgument(4, $fields);
+
+        return $serviceDefinition;
     }
 }
