@@ -87,7 +87,12 @@ class ImportExportManager
     {
         $objectsToSerialize = array();
         foreach ($objects as $object) {
-            array_push($objectsToSerialize, $this->guessHandler(get_class($object), $mode)->exportObject($object));
+            $class = $this->getEntityReflectionClass($object);
+            array_push($objectsToSerialize, $this->guessHandler($class->getName(), $mode)->exportObject($object));
+        }
+
+        if (count($objectsToSerialize) === 1) {
+            return $objectsToSerialize[0];
         }
 
         return $objectsToSerialize;
@@ -165,5 +170,50 @@ class ImportExportManager
         }
 
         return $this->guessHandlerByClassNameAndMode($className, $mode);
+    }
+
+    /**
+     * Is a proxy class
+     *
+     * @param ReflectionClass $reflection
+     * @return boolean
+     */
+    public static function isProxyClass(\ReflectionClass $reflection)
+    {
+        return in_array('Doctrine\ORM\Proxy\Proxy', array_keys($reflection->getInterfaces()));
+    }
+
+    /**
+     * getEntityReflectionClass
+     *
+     * @param Object $entity
+     * @return ReflectionClass
+     */
+    public function getEntityReflectionClass($entity)
+    {
+        $reflection = new \ReflectionClass($entity);
+        if (self::isProxyClass($reflection) && $reflection->getParentClass()) {
+            return $reflection->getParentClass();
+        }
+
+        return $reflection;
+    }
+
+    /**
+     * Returns given word as CamelCased
+     *
+     * Converts a word like "send_email" to "SendEmail". It
+     * will remove non alphanumeric character from the word, so
+     * "who's online" will be converted to "WhoSOnline"
+     *
+     * @access public
+     * @static
+     * @see variablize
+     * @param    string    $word    Word to convert to camel case
+     * @return string UpperCamelCasedWord
+     */
+    public static function camelize($word)
+    {
+        return str_replace(' ', '', ucwords(preg_replace('/[^A-Z^a-z^0-9]+/', ' ', $word)));
     }
 }

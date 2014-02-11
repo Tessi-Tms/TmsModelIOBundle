@@ -88,23 +88,30 @@ class ImportExportHandler
     {
         $exportedObject = array();
         $classMetadata = $this->objectManager->getClassMetadata($this->className);
-        $fieldMappings = $classMetadata->fieldMappings;
 
+        $fieldMappings = $classMetadata->fieldMappings;
         foreach ($fieldMappings as $key => $fieldMapping) {
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-            $exportedObject[$key] = $classMetadata->getFieldValue($object, $key);
+
+            if (ImportExportManager::isProxyClass(new \ReflectionClass($object))) {
+                $getter = 'get' . ImportExportManager::camelize($key);
+                $exportedObject[$key] = $object->$getter();
+            } else {
+                $exportedObject[$key] = $classMetadata->getFieldValue($object, $key);
+            }
         }
 
         $associationMappings = $classMetadata->associationMappings;
-        foreach ($associationMappings as $key => $associationMapping) {
-            if (!in_array($key, array_keys($this->fields)) || !$this->fields[$key]) {
+        foreach ($associationMappings as $key => $properties) {
+            if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-
-            $exportedField = $this->importExportManager->exportNoSerialization($classMetadata->getFieldValue($object, $key), $this->fields[$key]);
-            $exportedObject[$key] = $exportedField;
+            if (!$properties['isOwningSide'] || $properties['isOwningSide'] && !isset($properties['joinColumns'] )) {
+                continue;
+            }
+            $exportedObject[$key] = $this->importExportManager->exportNoSerialization(array($classMetadata->getFieldValue($object, $key)), $this->fields[$key] ? $this->fields[$key] : 'default');
         }
 
         return $exportedObject;
@@ -148,12 +155,24 @@ class ImportExportHandler
     private function checkAndPrepareFields(array $fields)
     {
         $preparedFields = array();
+
+        if ('default' === $this->mode) {
+            $classMetadata = $this->objectManager->getClassMetadata($this->className);
+            $fieldMappings = $classMetadata->fieldMappings;
+            foreach ($fieldMappings as $key => $fieldMapping) {
+                $preparedFields[$key] = null;
+            }
+
+            return $preparedFields;
+        }
+
         foreach ($fields as $key => $field) {
             if (!is_array($field)) {
                 $preparedFields[$field] = null;
                 continue;
             }
 
+            // Get the mode of the field if it is defined
             if (is_array($field[key($field)]) && isset($field[key($field)]['mode'])) {
                 $preparedFields[key($field)] = $field[key($field)]['mode'];
             } else {
