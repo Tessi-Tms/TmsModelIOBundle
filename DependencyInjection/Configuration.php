@@ -33,6 +33,7 @@ class Configuration implements ConfigurationInterface
                         ->children()
                             ->scalarNode('object_manager')->isRequired()->cannotBeEmpty()->end()
                             ->scalarNode('class')->isRequired()->cannotBeEmpty()->end()
+                            ->scalarNode('repository')->defaultValue(null)->end()
                             ->arrayNode('modes')
                                 ->defaultValue(array())
                                 ->prototype('variable')->end()

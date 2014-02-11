@@ -118,6 +118,28 @@ class ImportExportManager
     }
 
     /**
+     * Import No Deserialization
+     *
+     * @param string $content
+     * @param string $model
+     * @param string $mode
+     * @return array
+     */
+    public function importNoDeserialization($content, $model, $mode)
+    {
+        if (is_array($content)) {
+            $objects = array();
+            foreach ($content as $objectToImport) {
+                array_push($objects, $this->guessHandler($model, $mode)->importObject($objectToImport));
+            }
+
+            return $objects;
+        } else {
+            return $this->guessHandler($model, $mode)->importObject($content);
+        }
+    }
+
+    /**
      * Build an identifier based on the className and the mode of the Handler
      *
      * @param string $className

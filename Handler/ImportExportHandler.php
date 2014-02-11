@@ -16,6 +16,7 @@ class ImportExportHandler
     private $modelName;
     private $mode;
     private $fields;
+    private $repository;
     private $importExportManager;
 
     /**
@@ -26,15 +27,17 @@ class ImportExportHandler
      * @param string              $modelName
      * @param string              $mode
      * @param array               $fields
+     * @param Object              $repository
      * @param ImportExportManager $importExportManager
      */
-    public function __construct($objectManager, $className, $modelName, $mode, array $fields, ImportExportManager $importExportManager)
+    public function __construct($objectManager, $className, $modelName, $mode, array $fields, $repository, ImportExportManager $importExportManager)
     {
         $this->objectManager       = $objectManager->getManager();
         $this->className           = $className;
         $this->modelName           = $modelName;
         $this->mode                = $mode;
         $this->fields              = $this->checkAndPrepareFields($fields);
+        $this->repository          = $repository;
         $this->importExportManager = $importExportManager;
     }
 
@@ -79,6 +82,16 @@ class ImportExportHandler
     }
 
     /**
+     * Get Repository
+     *
+     * @return Object
+     */
+    public function getRepository()
+    {
+        return $this->repository;
+    }
+
+    /**
      * Export a given object
      *
      * @param Object $object
@@ -104,6 +117,9 @@ class ImportExportHandler
         }
 
         $associationMappings = $classMetadata->associationMappings;
+
+        //@todo participation_full: export associations
+
         foreach ($associationMappings as $key => $properties) {
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
@@ -111,7 +127,12 @@ class ImportExportHandler
             if (!$properties['isOwningSide'] || $properties['isOwningSide'] && !isset($properties['joinColumns'] )) {
                 continue;
             }
-            $exportedObject[$key] = $this->importExportManager->exportNoSerialization(array($classMetadata->getFieldValue($object, $key)), $this->fields[$key] ? $this->fields[$key] : 'default');
+            $value = $classMetadata->getFieldValue($object, $key);
+            if ($value) {
+                $exportedObject[$key] = $this->importExportManager->exportNoSerialization(array($value), $this->fields[$key] ? $this->fields[$key] : 'default');
+            } else {
+                $exportedObject[$key] = null;
+            }
         }
 
         return $exportedObject;
@@ -128,12 +149,35 @@ class ImportExportHandler
         $classMetadata = $this->objectManager->getClassMetadata($this->className);
         $importedObject = new $this->className();
 
-        foreach ($object as $field => $value) {
-            if (!in_array($field, array_keys($this->fields))) {
+        $fieldMappings = $classMetadata->fieldMappings;
+        foreach ($fieldMappings as $key => $fieldMapping) {
+            if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-            $classMetadata->setFieldValue($importedObject, $field, $value);
+
+            if ($key === 'id') {
+                $importedObject = $this->getRepository()->find($object->$key);
+
+                return $importedObject;
+            }
+
+            $classMetadata->setFieldValue($importedObject, $key, $object->$key);
         }
+
+        $associationMappings = $classMetadata->associationMappings;
+        foreach ($associationMappings as $key => $properties) {
+            if (!in_array($key, array_keys($this->fields))) {
+                continue;
+            }
+
+            if ($object->$key) {
+                $classMetadata->setFieldValue($importedObject, $key, $this->importExportManager->importNoDeserialization($object->$key, $key, $this->fields[$key] ? $this->fields[$key] : 'default'));
+            } else {
+                $classMetadata->setFieldValue($importedObject, $key, null);
+            }
+        }
+
+        var_dump($importedObject);
 
         return $importedObject;
     }

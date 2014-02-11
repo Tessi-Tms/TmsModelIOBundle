@@ -5,7 +5,7 @@ services:
 
     tms_model_io.handler.import_export_handler:
         class: Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler
-        arguments: [null, null, null, null, null, @tms_model_io.manager.import_export_manager]
+        arguments: [null, null, null, null, null, null, @tms_model_io.manager.import_export_manager]
         abstract: true
         public: false
 
