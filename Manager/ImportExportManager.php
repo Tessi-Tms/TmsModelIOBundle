@@ -185,7 +185,7 @@ class ImportExportManager
     {
         $className = null;
         foreach ($this->handlers as $handler) {
-            if ($handler->getModelName() === $model) {
+            if ($handler->getModelName() === $model || in_array($model, $handler->getAliases())) {
                 $className = $handler->getClassName();
             }
         }

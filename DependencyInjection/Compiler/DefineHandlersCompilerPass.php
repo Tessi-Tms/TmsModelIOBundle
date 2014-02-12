@@ -39,7 +39,8 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
                     $model['class'],
                     $modelName,
                     $modeName,
-                    $repositoryReference
+                    $repositoryReference,
+                    $model['aliases']
                 );
 
                 $handlerId = sprintf('%s.%s.%s', $importExportHandlerServiceId, $modelName, $modeName);
@@ -62,6 +63,7 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
                     $modelName,
                     $modeName,
                     $repositoryReference,
+                    $model['aliases'],
                     $fields
                 );
 
@@ -88,7 +90,7 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
      * @param Reference  $repositoryReference
      * @param array      $fields
      */
-    private function createImportExportHandlerService($importExportHandlerServiceId, Reference $objectManagerReference, $className, $modelName, $modeName, $repositoryReference, $fields = array())
+    private function createImportExportHandlerService($importExportHandlerServiceId, Reference $objectManagerReference, $className, $modelName, $modeName, $repositoryReference, $aliases, $fields = array())
     {
         $serviceDefinition = new DefinitionDecorator($importExportHandlerServiceId);
         $serviceDefinition->isAbstract(false);
@@ -98,6 +100,7 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
         $serviceDefinition->replaceArgument(3, $modeName);
         $serviceDefinition->replaceArgument(4, $fields);
         $serviceDefinition->replaceArgument(5, $repositoryReference);
+        $serviceDefinition->replaceArgument(6, $aliases);
 
         return $serviceDefinition;
     }

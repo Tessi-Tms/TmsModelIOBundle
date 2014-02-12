@@ -17,6 +17,7 @@ class ImportExportHandler
     private $mode;
     private $fields;
     private $repository;
+    private $aliases;
     private $importExportManager;
 
     /**
@@ -28,9 +29,10 @@ class ImportExportHandler
      * @param string              $mode
      * @param array               $fields
      * @param Object              $repository
+     * @param array               $aliases
      * @param ImportExportManager $importExportManager
      */
-    public function __construct($objectManager, $className, $modelName, $mode, array $fields, $repository, ImportExportManager $importExportManager)
+    public function __construct($objectManager, $className, $modelName, $mode, array $fields, $repository, array $aliases, ImportExportManager $importExportManager)
     {
         $this->objectManager       = $objectManager->getManager();
         $this->className           = $className;
@@ -38,6 +40,7 @@ class ImportExportHandler
         $this->mode                = $mode;
         $this->fields              = $this->checkAndPrepareFields($fields);
         $this->repository          = $repository;
+        $this->aliases             = $aliases;
         $this->importExportManager = $importExportManager;
     }
 
@@ -92,6 +95,16 @@ class ImportExportHandler
     }
 
     /**
+     * Get Aliases
+     *
+     * @return array
+     */
+    public function getAliases()
+    {
+        return $this->aliases;
+    }
+
+    /**
      * Export a given object
      *
      * @param Object $object
@@ -117,19 +130,30 @@ class ImportExportHandler
         }
 
         $associationMappings = $classMetadata->associationMappings;
-
-        //@todo participation_full: export associations
-
         foreach ($associationMappings as $key => $properties) {
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-            if (!$properties['isOwningSide'] || $properties['isOwningSide'] && !isset($properties['joinColumns'] )) {
+            $values = null;
+            $value = $classMetadata->getFieldValue($object, $key);
+
+            if (!$value) {
                 continue;
             }
-            $value = $classMetadata->getFieldValue($object, $key);
-            if ($value) {
-                $exportedObject[$key] = $this->importExportManager->exportNoSerialization(array($value), $this->fields[$key] ? $this->fields[$key] : 'default');
+
+            if (ImportExportManager::isCollectionClass(new \ReflectionClass($value))) {
+                $getter = 'get' . ImportExportManager::camelize($key);
+                $collection = $object->$getter();
+                $values = array();
+                foreach ($collection as $collectionData) {
+                    array_push($values, $collectionData);
+                }
+            } else {
+                $values = array($value);
+            }
+
+            if ($values) {
+                $exportedObject[$key] = $this->importExportManager->exportNoSerialization($values, $this->fields[$key] ? $this->fields[$key] : 'default');
             } else {
                 $exportedObject[$key] = null;
             }
@@ -170,14 +194,12 @@ class ImportExportHandler
                 continue;
             }
 
-            if ($object->$key) {
+            if (isset($object->$key) && $object->$key) {
                 $classMetadata->setFieldValue($importedObject, $key, $this->importExportManager->importNoDeserialization($object->$key, $key, $this->fields[$key] ? $this->fields[$key] : 'default'));
             } else {
                 $classMetadata->setFieldValue($importedObject, $key, null);
             }
         }
-
-        var_dump($importedObject);
 
         return $importedObject;
     }
