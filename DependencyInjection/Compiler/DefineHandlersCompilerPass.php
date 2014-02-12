@@ -28,7 +28,6 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
 
         foreach ($configuration['models'] as $modelName => $model) {
             $objectManagerReference = new Reference($model['object_manager']);
-            $repositoryReference = $model['repository'] ? new Reference($model['repository']) : null;
 
             // No Modes found. A default mode has to be created.
             if (!count($model['modes'])) {
@@ -39,7 +38,6 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
                     $model['class'],
                     $modelName,
                     $modeName,
-                    $repositoryReference,
                     $model['aliases']
                 );
 
@@ -62,7 +60,6 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
                     $model['class'],
                     $modelName,
                     $modeName,
-                    $repositoryReference,
                     $model['aliases'],
                     $fields
                 );
@@ -87,10 +84,9 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
      * @param string     $className
      * @param string     $modelName
      * @param string     $modeName
-     * @param Reference  $repositoryReference
      * @param array      $fields
      */
-    private function createImportExportHandlerService($importExportHandlerServiceId, Reference $objectManagerReference, $className, $modelName, $modeName, $repositoryReference, $aliases, $fields = array())
+    private function createImportExportHandlerService($importExportHandlerServiceId, Reference $objectManagerReference, $className, $modelName, $modeName, $aliases, $fields = array())
     {
         $serviceDefinition = new DefinitionDecorator($importExportHandlerServiceId);
         $serviceDefinition->isAbstract(false);
@@ -99,8 +95,7 @@ class DefineHandlersCompilerPass implements CompilerPassInterface
         $serviceDefinition->replaceArgument(2, $modelName);
         $serviceDefinition->replaceArgument(3, $modeName);
         $serviceDefinition->replaceArgument(4, $fields);
-        $serviceDefinition->replaceArgument(5, $repositoryReference);
-        $serviceDefinition->replaceArgument(6, $aliases);
+        $serviceDefinition->replaceArgument(5, $aliases);
 
         return $serviceDefinition;
     }

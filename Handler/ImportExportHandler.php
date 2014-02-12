@@ -7,7 +7,6 @@
 namespace Tms\Bundle\ModelIOBundle\Handler;
 
 use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
-//use Doctrine\Common\Persistence\ObjectManager;
 
 class ImportExportHandler
 {
@@ -16,7 +15,6 @@ class ImportExportHandler
     private $modelName;
     private $mode;
     private $fields;
-    private $repository;
     private $aliases;
     private $importExportManager;
 
@@ -28,18 +26,16 @@ class ImportExportHandler
      * @param string              $modelName
      * @param string              $mode
      * @param array               $fields
-     * @param Object              $repository
      * @param array               $aliases
      * @param ImportExportManager $importExportManager
      */
-    public function __construct($objectManager, $className, $modelName, $mode, array $fields, $repository, array $aliases, ImportExportManager $importExportManager)
+    public function __construct($objectManager, $className, $modelName, $mode, array $fields, array $aliases, ImportExportManager $importExportManager)
     {
         $this->objectManager       = $objectManager->getManager();
         $this->className           = $className;
         $this->modelName           = $modelName;
         $this->mode                = $mode;
         $this->fields              = $this->checkAndPrepareFields($fields);
-        $this->repository          = $repository;
         $this->aliases             = $aliases;
         $this->importExportManager = $importExportManager;
     }
@@ -82,16 +78,6 @@ class ImportExportHandler
     public function getFields()
     {
         return $this->fields;
-    }
-
-    /**
-     * Get Repository
-     *
-     * @return Object
-     */
-    public function getRepository()
-    {
-        return $this->repository;
     }
 
     /**
@@ -180,9 +166,7 @@ class ImportExportHandler
             }
 
             if ($key === 'id') {
-                $importedObject = $this->getRepository()->find($object->$key);
-
-                return $importedObject;
+                return $this->objectManager->getRepository($this->className)->find($object->$key);
             }
 
             $classMetadata->setFieldValue($importedObject, $key, $object->$key);
