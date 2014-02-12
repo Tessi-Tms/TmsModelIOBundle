@@ -85,17 +85,17 @@ class ImportExportManager
      */
     public function exportNoSerialization($objects, $mode)
     {
-        $objectsToSerialize = array();
+        $objectsToExport = array();
         foreach ($objects as $object) {
             $class = $this->getEntityReflectionClass($object);
-            array_push($objectsToSerialize, $this->guessHandler($class->getName(), $mode)->exportObject($object));
+            array_push($objectsToExport, $this->guessHandler($class->getName(), $mode)->exportObject($object));
         }
 
-        if (count($objectsToSerialize) === 1) {
-            return $objectsToSerialize[0];
+        if (count($objectsToExport) === 1) {
+            return $objectsToExport[0];
         }
 
-        return $objectsToSerialize;
+        return $objectsToExport;
     }
 
     /**
@@ -108,13 +108,17 @@ class ImportExportManager
      */
     public function import($content, $model, $mode)
     {
-        $objects = array();
-        $deserializedObjects = $this->importExportSerializer->deserialize($content);
-        foreach ($deserializedObjects as $deserializedObject) {
-            array_push($objects, $this->guessHandler($model, $mode)->importObject($deserializedObject));
+        $deserializedContent = $this->importExportSerializer->deserialize($content);
+        if (is_array($deserializedContent)) {
+            $objects = array();
+            foreach ($deserializedContent as $deserializedObject) {
+                array_push($objects, $this->guessHandler($model, $mode)->importObject($deserializedObject));
+            }
+
+            return $objects;
         }
 
-        return $objects;
+        return $this->guessHandler($model, $mode)->importObject($deserializedContent);
     }
 
     /**
@@ -134,9 +138,9 @@ class ImportExportManager
             }
 
             return $objects;
-        } else {
-            return $this->guessHandler($model, $mode)->importObject($content);
         }
+
+        return $this->guessHandler($model, $mode)->importObject($content);
     }
 
     /**
@@ -150,7 +154,6 @@ class ImportExportManager
     {
         return md5($className . $mode);
     }
-
 
     /**
      * Guess a handler from given className and mode
@@ -206,6 +209,17 @@ class ImportExportManager
     }
 
     /**
+     * Is a collection class
+     *
+     * @param ReflectionClass $reflection
+     * @return boolean
+     */
+    public static function isCollectionClass(\ReflectionClass $reflection)
+    {
+        return in_array('Doctrine\Common\Collections\Collection', array_keys($reflection->getInterfaces()));
+    }
+
+    /**
      * getEntityReflectionClass
      *
      * @param Object $entity
@@ -231,7 +245,7 @@ class ImportExportManager
      * @access public
      * @static
      * @see variablize
-     * @param    string    $word    Word to convert to camel case
+     * @param  string $word Word to convert to camel case
      * @return string UpperCamelCasedWord
      */
     public static function camelize($word)
