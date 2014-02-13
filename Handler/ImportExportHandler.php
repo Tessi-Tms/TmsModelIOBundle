@@ -120,6 +120,8 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
+
+            //@todo set to an empty array if it is a collection and there is no data to return
             $values = null;
             $value = $classMetadata->getFieldValue($object, $key);
 
@@ -127,6 +129,7 @@ class ImportExportHandler
                 continue;
             }
 
+            $collection = true;
             if (ImportExportManager::isCollectionClass(new \ReflectionClass($value))) {
                 $getter = 'get' . ImportExportManager::camelize($key);
                 $collection = $object->$getter();
@@ -136,13 +139,10 @@ class ImportExportHandler
                 }
             } else {
                 $values = array($value);
+                $collection = false;
             }
 
-            if ($values) {
-                $exportedObject[$key] = $this->importExportManager->exportNoSerialization($values, $this->fields[$key] ? $this->fields[$key] : 'default');
-            } else {
-                $exportedObject[$key] = null;
-            }
+            $exportedObject[$key] = $this->importExportManager->exportNoSerialization($values, $this->fields[$key] ? $this->fields[$key] : 'default', $collection);
         }
 
         return $exportedObject;

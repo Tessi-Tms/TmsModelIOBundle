@@ -83,7 +83,7 @@ class ImportExportManager
      * @param string $mode
      * @return array
      */
-    public function exportNoSerialization($objects, $mode)
+    public function exportNoSerialization($objects, $mode, $collection = true)
     {
         $objectsToExport = array();
         foreach ($objects as $object) {
@@ -91,7 +91,7 @@ class ImportExportManager
             array_push($objectsToExport, $this->guessHandler($class->getName(), $mode)->exportObject($object));
         }
 
-        if (count($objectsToExport) === 1) {
+        if (!$collection) {
             return $objectsToExport[0];
         }
 
