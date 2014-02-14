@@ -177,11 +177,18 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
+            if (!isset($object->$key)) {
+                continue;
+            }
 
-            if (isset($object->$key) && $object->$key) {
+            if ($object->$key) {
                 $classMetadata->setFieldValue($importedObject, $key, $this->importExportManager->importNoDeserialization($object->$key, $key, $this->fields[$key] ? $this->fields[$key] : 'default'));
             } else {
-                $classMetadata->setFieldValue($importedObject, $key, null);
+                $emptyValue = null;
+                if (is_array($object->$key)) {
+                    $emptyValue = array();
+                }
+                $classMetadata->setFieldValue($importedObject, $key, $emptyValue);
             }
         }
 
