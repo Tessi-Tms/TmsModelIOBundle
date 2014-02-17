@@ -13,8 +13,8 @@ use Tms\Bundle\ModelIOBundle\Exception\HandlerClassNameNotFoundException;
 
 class ImportExportManager
 {
-    private $importExportSerializer;
-    private $handlers;
+    private $importExportSerializer;    // The Serializer
+    private $handlers;                  // Array of the different handlers defined in the configuration
 
     /**
      * Constructor
@@ -65,8 +65,8 @@ class ImportExportManager
     /**
      * Export
      *
-     * @param array|Collection  $objects
-     * @param string $mode
+     * @param array|Collection $objects
+     * @param string           $mode
      * @return string
      */
     public function export($objects, $mode)
@@ -77,13 +77,14 @@ class ImportExportManager
     }
 
     /**
-     * Export
+     * Export without serializing (useful for associated objects)
      *
-     * @param array|Collection  $objects
-     * @param string $mode
+     * @param array|Collection $objects
+     * @param boolean          $isCollection
+     * @param string           $mode
      * @return array
      */
-    public function exportNoSerialization($objects, $mode, $collection = true)
+    public function exportNoSerialization($objects, $mode, $isCollection = true)
     {
         $objectsToExport = array();
         foreach ($objects as $object) {
@@ -91,7 +92,7 @@ class ImportExportManager
             array_push($objectsToExport, $this->guessHandler($class->getName(), $mode)->exportObject($object));
         }
 
-        if (!$collection) {
+        if (!$isCollection) {
             return $objectsToExport[0];
         }
 
@@ -122,7 +123,7 @@ class ImportExportManager
     }
 
     /**
-     * Import No Deserialization
+     * Import without deserializing (useful for associated objects)
      *
      * @param string $content
      * @param string $model

@@ -10,13 +10,13 @@ use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
 
 class ImportExportHandler
 {
-    private $objectManager;
-    private $className;
-    private $modelName;
-    private $mode;
-    private $fields;
-    private $aliases;
-    private $importExportManager;
+    private $objectManager;        // Object Manager used (eg: doctrine)
+    private $className;            // Name of the class (eg: Tms\Bundle\OperationBundle\Entity\Benefit)
+    private $modelName;            // Name of the model (eg: benefit)
+    private $mode;                 // Defined mode (eg: simple)
+    private $fields;               // Array of fields to import/export
+    private $aliases;              // Array of aliases given to the manager
+    private $importExportManager;  // The Import/Export Manager
 
     /**
      * Constructor
@@ -164,11 +164,9 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-
             if ($key === 'id') {
                 return $this->objectManager->getRepository($this->className)->find($object->$key);
             }
-
             $classMetadata->setFieldValue($importedObject, $key, $object->$key);
         }
 
@@ -213,6 +211,7 @@ class ImportExportHandler
     {
         $preparedFields = array();
 
+        // In default mode, only the fields that are not associations are set to be imported/exported
         if ('default' === $this->mode) {
             $classMetadata = $this->objectManager->getClassMetadata($this->className);
             $fieldMappings = $classMetadata->fieldMappings;
@@ -224,6 +223,7 @@ class ImportExportHandler
         }
 
         foreach ($fields as $key => $field) {
+            // If the field is not an array, it implies that no particular mode is defined
             if (!is_array($field)) {
                 $preparedFields[$field] = null;
                 continue;
