@@ -120,29 +120,26 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-
-            //@todo set to an empty array if it is a collection and there is no data to return
-            $values = null;
-            $value = $classMetadata->getFieldValue($object, $key);
-
-            if (!$value) {
+            $fieldValue = $classMetadata->getFieldValue($object, $key);
+            if (!$fieldValue) {
+                $exportedObject[$key] = $fieldValue;
                 continue;
             }
 
-            $collection = true;
-            if (ImportExportManager::isCollectionClass(new \ReflectionClass($value))) {
-                $getter = 'get' . ImportExportManager::camelize($key);
-                $collection = $object->$getter();
-                $values = array();
-                foreach ($collection as $collectionData) {
-                    array_push($values, $collectionData);
+            $fieldValues = array();
+            $isCollection = true;
+            if (ImportExportManager::isCollectionClass(new \ReflectionClass($fieldValue))) {
+                $getter = sprintf('get%s', ImportExportManager::camelize($key));
+                $collectionValues = $object->$getter();
+                foreach ($collectionValues as $collectionValue) {
+                    array_push($fieldValues, $collectionValue);
                 }
             } else {
-                $values = array($value);
-                $collection = false;
+                array_push($fieldValues, $fieldValue);
+                $isCollection = false;
             }
 
-            $exportedObject[$key] = $this->importExportManager->exportNoSerialization($values, $this->fields[$key] ? $this->fields[$key] : 'default', $collection);
+            $exportedObject[$key] = $this->importExportManager->exportNoSerialization($fieldValues, ($this->fields[$key] ? $this->fields[$key] : 'default'), $isCollection);
         }
 
         return $exportedObject;
