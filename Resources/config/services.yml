@@ -1,4 +1,13 @@
 services:
+    tms_model_io.handler.file_handler:
+        class: Tms\Bundle\ModelIOBundle\Handler\FileHandler
+        arguments: [%import_directory%]
+
+    tms_model_io.form.type.import:
+        class: Tms\Bundle\ModelIOBundle\Form\Type\ImportType
+        tags:
+            - { name: form.type, alias: tms_model_io_import }
+
     tms_model_io.manager.import_export_manager:
         class: Tms\Bundle\ModelIOBundle\Manager\ImportExportManager
         arguments: [@tms_model_io.serializer.import_export_serializer]
