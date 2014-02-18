@@ -35,7 +35,7 @@ class FileHandler
         }
         $file->move(self::$importDirectory, $file->getClientOriginalName());
 
-        if (!$this->isValidFile($file)) {
+        if (!self::isValidFile($file)) {
             return false;
         }
 
@@ -44,6 +44,10 @@ class FileHandler
         $content = fread($handler, filesize(self::$importDirectory . $file->getClientOriginalName()));
         fclose($handler);
         unlink(self::$importDirectory . $file->getClientOriginalName());
+
+        if (!self::isValidJson($content)) {
+            return false;
+        }
 
         return $content;
     }
@@ -54,7 +58,7 @@ class FileHandler
      * @param UploadedFile $file
      * @return boolean
      */
-    private function isValidFile(UploadedFile $file)
+    protected static function isValidFile(UploadedFile $file)
     {
         $allowedExtensions = array('json');
         $extension = pathinfo(self::$importDirectory . $file->getClientOriginalName(), PATHINFO_EXTENSION);
@@ -63,5 +67,16 @@ class FileHandler
         }
 
         return true;
+    }
+
+    /**
+     * Is valid json
+     *
+     * @param string $toCheck
+     * @return boolean
+     */
+    protected static function isValidJson($toCheck)
+    {
+        return !empty($toCheck) && is_string($toCheck) && is_array(json_decode($toCheck, true)) && json_last_error() == 0;
     }
 }

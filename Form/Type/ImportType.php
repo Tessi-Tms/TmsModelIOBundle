@@ -22,6 +22,10 @@ class ImportType extends AbstractType
             ->add('attachment', 'file', array(
                 'mapped' => false
             ))
+            ->add('remove-existing-entries', 'checkbox', array(
+                'mapped' => false,
+                'required' => false
+            ))
         ;
     }
 

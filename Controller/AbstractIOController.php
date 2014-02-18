@@ -69,7 +69,11 @@ abstract class AbstractIOController extends Controller
 
                 $entities = $importExportManager->import($fileContent, $modelName, $mode);
 
-                $this->manageImportedEntities($entities, $entity);
+                if ($form['remove-existing-entries']->getData()) {
+                    $this->removeEntities($entity);
+                }
+
+                $this->importEntities($entities, $entity);
 
                 $this->get('session')->getFlashBag()->add(
                     'success',
@@ -96,10 +100,17 @@ abstract class AbstractIOController extends Controller
     }
 
     /**
-     * Manage Imported Entities
+     * Import Entities
      *
      * @param array       $entities   // Array of entities to import
      * @param Object|null $entity     // The entity to apply modifications
      */
-    abstract protected function manageImportedEntities(array $entities, $entity = null);
+    abstract protected function importEntities(array $entities, $entity = null);
+
+    /**
+     * Remove Entities
+     *
+     * @param Object|null $entity     // The entity to apply modifications
+     */
+    abstract protected function removeEntities($entity = null);
 }
