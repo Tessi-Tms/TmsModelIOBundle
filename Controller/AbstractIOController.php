@@ -19,16 +19,15 @@ abstract class AbstractIOController extends Controller
     /**
      * Export
      *
-     * @param Object $entity        // The exported Entity
-     * @param array  $entities      // Array of entities to export
-     * @param string $modelName     // Name of the model
-     * @param string $mode          // Mode
+     * @param array       $entities      // Array of entities to export
+     * @param string      $mode          // Mode - The way data are exported
+     * @param string|null $filename      // Name of the generated file
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function export($entity, array $entities, $modelName, $mode)
+    public function export(array $entities, $mode, $filename = null)
     {
         $content = $this->get('tms_model_io.manager.import_export_manager')->export($entities, $mode);
-        $filename = sprintf('%s_%s_%s.json', str_replace(' ', '_', $entity), $modelName, $mode);
+        $filename = sprintf('%s.json', $filename ? $filename : 'export');
 
         $response = new Response($content);
         $response->headers->set('Content-type', 'application/json');
@@ -49,7 +48,7 @@ abstract class AbstractIOController extends Controller
      */
     public function import(Request $request, $entity, $formAction, $modelName, $mode)
     {
-        $form = $this->createForm('tms_model_io_import', $entity, array('label' => $this->get('translator')->trans('File')));
+        $form = $this->createForm('tms_model_io_import', $entity);
 
         if ($request->getMethod() === 'POST') {
             return $this->manageImportForm($request, $form, $entity, $modelName, $mode);
