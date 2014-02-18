@@ -20,8 +20,7 @@ class ImportType extends AbstractType
         parent::buildForm($builder, $options);
         $builder
             ->add('attachment', 'file', array(
-                'mapped' => false,
-                'label'  => $options['label']
+                'mapped' => false
             ))
         ;
     }
