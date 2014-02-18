@@ -39,19 +39,50 @@ abstract class AbstractIOController extends Controller
     /**
      * Import
      *
-     * @param Request $request    // The Request Object
-     * @param Object  $entity     // The Object to import
-     * @param string  $formAction // The form action route
-     * @param string  $modelName  // The name of the model
-     * @param string  $mode       // The mode
+     * @param Request $request      // The Request Object
+     * @param Object  $entity       // The Object to import
+     * @param string  $formAction   // The form action route
+     * @param string  $modelName    // The name of the model
+     * @param string  $mode         // The mode
+     * @param string  $redirectUrl  // The URL to redirect to after the processing of the form
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function import(Request $request, $entity, $formAction, $modelName, $mode)
+    public function import(Request $request, $entity, $formAction, $modelName, $mode, $redirectUrl)
     {
         $form = $this->createForm('tms_model_io_import', $entity);
 
         if ($request->getMethod() === 'POST') {
-            return $this->manageImportForm($request, $form, $entity, $modelName, $mode);
+            $importExportManager = $this->get('tms_model_io.manager.import_export_manager');
+            $form->handleRequest($request);
+
+            if ($form->isValid()) {
+                $file = $form['attachment']->getData();
+                $fileContent = $this->get('tms_model_io.handler.file_handler')->fileImport($file);
+                if (false === $fileContent) {
+                    $this->get('session')->getFlashBag()->add(
+                        'error',
+                        $this->get('translator')->trans('The file is not valid')
+                    );
+
+                    return $this->redirect($redirectUrl);
+                }
+
+                $entities = $importExportManager->import($fileContent, $modelName, $mode);
+
+                $this->manageImportedEntities($entities, $entity);
+
+                $this->get('session')->getFlashBag()->add(
+                    'success',
+                    $this->get('translator')->trans('The file has been imported')
+                );
+            } else {
+                $this->get('session')->getFlashBag()->add(
+                    'error',
+                    $this->get('translator')->trans('The file has not been imported')
+                );
+            }
+
+            return $this->redirect($redirectUrl);
         }
 
         return $this->render(
@@ -65,13 +96,10 @@ abstract class AbstractIOController extends Controller
     }
 
     /**
-     * Manage the Import Form
+     * Manage Imported Entities
      *
-     * @param Request $request   // The Request Object
-     * @param Form    $form      // The import form
-     * @param Object  $entity    // The object to import
-     * @param string  $modelName // The name of the model
-     * @param string  $mode      // The mode
+     * @param array       $entities   // Array of entities to import
+     * @param Object|null $entity     // The entity to apply modifications
      */
-    abstract protected function manageImportForm(Request $request, Form $form, $entity, $modelName, $mode);
+    abstract protected function manageImportedEntities(array $entities, $entity = null);
 }

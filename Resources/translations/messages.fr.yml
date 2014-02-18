@@ -1,3 +1,14 @@
 # Forms
+"Attachment":                       "Fichier"
 
-"Attachment": "Fichier"
+# Buttons
+"Export":                           "Exporter"
+"Export all":                       "Tout exporter"
+"Import":                           "Import"
+"Import all":                       "Tout importer"
+"Valid":                            "Valider"
+
+# Texts
+"The file has been imported":       "Le fichier a été importé"
+"The file has not been imported":   "Le fichier n'a pas été importé"
+"The file is not valid":            "Le fichier n'est pas valide"

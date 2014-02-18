@@ -34,6 +34,11 @@ class FileHandler
             mkdir(self::$importDirectory, 0755);
         }
         $file->move(self::$importDirectory, $file->getClientOriginalName());
+
+        if (!$this->isValidFile($file)) {
+            return false;
+        }
+
         $extension = pathinfo(self::$importDirectory . $file->getClientOriginalName(), PATHINFO_EXTENSION);
         $handler = fopen(self::$importDirectory . $file->getClientOriginalName(), 'r');
         $content = fread($handler, filesize(self::$importDirectory . $file->getClientOriginalName()));
@@ -41,5 +46,22 @@ class FileHandler
         unlink(self::$importDirectory . $file->getClientOriginalName());
 
         return $content;
+    }
+
+    /**
+     * Check if a file is valid
+     *
+     * @param UploadedFile $file
+     * @return boolean
+     */
+    private function isValidFile(UploadedFile $file)
+    {
+        $allowedExtensions = array('json');
+        $extension = pathinfo(self::$importDirectory . $file->getClientOriginalName(), PATHINFO_EXTENSION);
+        if (!in_array($extension, $allowedExtensions)) {
+            return false;
+        }
+
+        return true;
     }
 }
