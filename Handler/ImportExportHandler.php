@@ -7,6 +7,7 @@
 namespace Tms\Bundle\ModelIOBundle\Handler;
 
 use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
+use Tms\Bundle\ModelIOBundle\Exception\MissingImportFieldException;
 
 class ImportExportHandler
 {
@@ -161,6 +162,10 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
+            if (!isset($object->$key)) {
+                throw new MissingImportFieldException($key, get_class($importedObject));
+            }
+
             if ($key === 'id') {
                 return $this->objectManager->getRepository($this->className)->find($object->$key);
             }
@@ -173,7 +178,7 @@ class ImportExportHandler
                 continue;
             }
             if (!isset($object->$key)) {
-                continue;
+                throw new MissingImportFieldException($key, get_class($importedObject));
             }
 
             if ($object->$key) {
