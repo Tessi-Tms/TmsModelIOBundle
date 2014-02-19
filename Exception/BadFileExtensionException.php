@@ -6,10 +6,10 @@
 
 namespace Tms\Bundle\ModelIOBundle\Exception;
 
-class MissingImportFieldException extends \Exception
+class BadFileExtensionException extends \Exception
 {
     public function __construct()
     {
-        parent::__construct('A missing Import field has been detected');
+        parent::__construct('Bad file extension detected');
     }
 }

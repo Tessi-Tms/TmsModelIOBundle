@@ -163,7 +163,7 @@ class ImportExportHandler
                 continue;
             }
             if (!isset($object->$key)) {
-                throw new MissingImportFieldException($key, get_class($importedObject));
+                throw new MissingImportFieldException();
             }
 
             if ($key === 'id') {

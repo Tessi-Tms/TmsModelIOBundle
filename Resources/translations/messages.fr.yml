@@ -1,15 +1,19 @@
 # Forms
-"Attachment":                       "Fichier"
-"Remove-existing-entries":          "Supprimer toutes les entrées existantes"
+"Attachment":                                   "Fichier"
+"Remove-existing-entries":                      "Supprimer toutes les entrées existantes"
 
 # Buttons
-"Export":                           "Exporter"
-"Export all":                       "Tout exporter"
-"Import":                           "Importer"
-"Import all":                       "Tout importer"
-"Valid":                            "Valider"
+"Export":                                       "Exporter"
+"Export all":                                   "Tout exporter"
+"Import":                                       "Importer"
+"Import all":                                   "Tout importer"
+"Valid":                                        "Valider"
 
 # Texts
-"The file has been imported":       "Le fichier a été importé"
-"The file has not been imported":   "Le fichier n'a pas été importé"
-"The file is not valid":            "Le fichier n'est pas valide"
+"The file has been imported":                   "Le fichier a été importé"
+"The file has not been imported":               "Le fichier n'a pas été importé"
+
+# Exceptions
+"A missing Import field has been detected":     "Un champ manquant a été détecté"
+"Bad file extension detected":                  "Le format du fichier n'est pas valide"
+"Unvalid content detected":                     "Le contenu du fichier est mal formaté"

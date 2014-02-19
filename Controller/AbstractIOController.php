@@ -56,17 +56,16 @@ abstract class AbstractIOController extends Controller
 
             if ($form->isValid()) {
                 $file = $form['attachment']->getData();
-                $fileContent = $this->get('tms_model_io.handler.file_handler')->fileImport($file);
-                if (false === $fileContent) {
+                try {
+                    $fileContent = $this->get('tms_model_io.handler.file_handler')->fileImport($file);
+                    $entities = $importExportManager->import($fileContent, $modelName, $mode);
+                } catch (\Exception $exception) {
                     $this->get('session')->getFlashBag()->add(
                         'error',
-                        $this->get('translator')->trans('The file is not valid')
-                    );
+                        $this->get('translator')->trans($exception->getMessage()));
 
                     return $this->redirect($redirectUrl);
                 }
-
-                $entities = $importExportManager->import($fileContent, $modelName, $mode);
 
                 if ($form['remove-existing-entries']->getData()) {
                     $this->removeEntities($entity);

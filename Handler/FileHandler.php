@@ -7,6 +7,8 @@
 namespace Tms\Bundle\ModelIOBundle\Handler;
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Tms\Bundle\ModelIOBundle\Exception\BadFileExtensionException;
+use Tms\Bundle\ModelIOBundle\Exception\UnvalidContentException;
 
 class FileHandler
 {
@@ -31,9 +33,8 @@ class FileHandler
      */
     public function fileImport(UploadedFile $file)
     {
-        if (!self::isValidFile($file)) {
-            return false;
-        }
+        self::checkFile($file);
+
         if (!is_dir(self::$importDirectory)) {
             mkdir(self::$importDirectory, 0755);
         }
@@ -51,7 +52,7 @@ class FileHandler
         unlink($filePath);
 
         if (!self::isValidJson($content)) {
-            return false;
+            throw new UnvalidContentException();
         }
 
         return $content;
@@ -59,14 +60,16 @@ class FileHandler
 
     /**
      * Check if a file is valid
-     * It checks the extension
      *
      * @param UploadedFile $file
-     * @return boolean
+     * @throws BadFileExtensionException
      */
-    protected static function isValidFile(UploadedFile $file)
+    protected static function checkFile(UploadedFile $file)
     {
-        return in_array(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION), self::$allowedExtensions);
+        $extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+        if (!in_array($extension, self::$allowedExtensions)) {
+            throw new BadFileExtensionException();
+        }
     }
 
     /**
