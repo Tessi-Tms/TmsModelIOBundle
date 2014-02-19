@@ -162,7 +162,7 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-            if (!isset($object->$key)) {
+            if (!property_exists($object, $key)) {
                 throw new MissingImportFieldException();
             }
 
@@ -177,8 +177,8 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
-            if (!isset($object->$key)) {
-                throw new MissingImportFieldException($key, get_class($importedObject));
+            if (!property_exists($object, $key)) {
+                throw new MissingImportFieldException();
             }
 
             if ($object->$key) {
