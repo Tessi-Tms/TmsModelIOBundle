@@ -8,7 +8,6 @@ namespace Tms\Bundle\ModelIOBundle\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Form\Form;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 /**
@@ -24,7 +23,7 @@ abstract class AbstractIOController extends Controller
      * @param string|null $filename      // Name of the generated file
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function export(array $entities, $mode, $filename = null)
+    protected function export(array $entities, $mode, $filename = null)
     {
         $content = $this->get('tms_model_io.manager.import_export_manager')->export($entities, $mode);
         $filename = sprintf('%s.json', $filename ? $filename : 'export');
@@ -47,7 +46,7 @@ abstract class AbstractIOController extends Controller
      * @param string  $redirectUrl  // The URL to redirect to after the processing of the form
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function import(Request $request, $entity, $formAction, $modelName, $mode, $redirectUrl)
+    protected function import(Request $request, $entity, $formAction, $modelName, $mode, $redirectUrl)
     {
         $form = $this->createForm('tms_model_io_import', $entity);
 

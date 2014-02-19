@@ -10,7 +10,8 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileHandler
 {
-    static private $importDirectory;
+    private static $importDirectory;
+    private static $allowedExtensions = array('json');
 
     /**
      * Constructor
@@ -26,24 +27,28 @@ class FileHandler
      * Read the content of the uploaded file
      *
      * @param UploadedFile $file
-     * @return string
+     * @return string|boolean
      */
     public function fileImport(UploadedFile $file)
     {
-        if (!is_dir(self::$importDirectory)) {
-            mkdir(self::$importDirectory, 0755);
-        }
-        $file->move(self::$importDirectory, $file->getClientOriginalName());
-
         if (!self::isValidFile($file)) {
             return false;
         }
+        if (!is_dir(self::$importDirectory)) {
+            mkdir(self::$importDirectory, 0755);
+        }
 
-        $extension = pathinfo(self::$importDirectory . $file->getClientOriginalName(), PATHINFO_EXTENSION);
-        $handler = fopen(self::$importDirectory . $file->getClientOriginalName(), 'r');
-        $content = fread($handler, filesize(self::$importDirectory . $file->getClientOriginalName()));
+        $filename = sprintf('%s.%s',
+            md5($file->getClientOriginalName()),
+            pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION)
+        );
+        $file->move(self::$importDirectory, $filename);
+        $filePath = self::$importDirectory . $filename;
+
+        $handler = fopen($filePath, 'r');
+        $content = fread($handler, filesize($filePath));
         fclose($handler);
-        unlink(self::$importDirectory . $file->getClientOriginalName());
+        unlink($filePath);
 
         if (!self::isValidJson($content)) {
             return false;
@@ -54,19 +59,14 @@ class FileHandler
 
     /**
      * Check if a file is valid
+     * It checks the extension
      *
      * @param UploadedFile $file
      * @return boolean
      */
     protected static function isValidFile(UploadedFile $file)
     {
-        $allowedExtensions = array('json');
-        $extension = pathinfo(self::$importDirectory . $file->getClientOriginalName(), PATHINFO_EXTENSION);
-        if (!in_array($extension, $allowedExtensions)) {
-            return false;
-        }
-
-        return true;
+        return in_array(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION), self::$allowedExtensions);
     }
 
     /**
