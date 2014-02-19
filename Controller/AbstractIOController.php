@@ -62,7 +62,8 @@ abstract class AbstractIOController extends Controller
                 } catch (\Exception $exception) {
                     $this->get('session')->getFlashBag()->add(
                         'error',
-                        $this->get('translator')->trans($exception->getMessage()));
+                        $this->get('translator')->trans($exception->getMessage())
+                    );
 
                     return $this->redirect($redirectUrl);
                 }
