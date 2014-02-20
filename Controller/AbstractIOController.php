@@ -9,6 +9,7 @@ namespace Tms\Bundle\ModelIOBundle\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Tms\Bundle\ModelIOBundle\Form\Type\ImportType;
 
 /**
  * Abstract IO Controller
@@ -38,17 +39,18 @@ abstract class AbstractIOController extends Controller
     /**
      * Import
      *
-     * @param Request $request      // The Request Object
-     * @param Object  $entity       // The Object to import
-     * @param string  $formAction   // The form action route
-     * @param string  $modelName    // The name of the model
-     * @param string  $mode         // The mode
-     * @param string  $redirectUrl  // The URL to redirect to after the processing of the form
+     * @param Request $request         // The Request Object
+     * @param Object  $entity          // The Object to import
+     * @param string  $formAction      // The form action route
+     * @param string  $modelName       // The name of the model
+     * @param string  $mode            // The mode
+     * @param string  $redirectUrl     // The URL to redirect to after the processing of the form
+     * @param string  $removalAllowed  // Add an option to the form in order to remove all existing entities
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    protected function import(Request $request, $entity, $formAction, $modelName, $mode, $redirectUrl)
+    protected function import(Request $request, $entity, $formAction, $modelName, $mode, $redirectUrl, $removalAllowed)
     {
-        $form = $this->createForm('tms_model_io_import', $entity);
+        $form = $this->createForm(new ImportType($removalAllowed), $entity);
 
         if ($request->getMethod() === 'POST') {
             $importExportManager = $this->get('tms_model_io.manager.import_export_manager');
@@ -68,7 +70,7 @@ abstract class AbstractIOController extends Controller
                     return $this->redirect($redirectUrl);
                 }
 
-                if ($form['remove-existing-entries']->getData()) {
+                if ($removalAllowed && $form['remove-existing-entries']->getData()) {
                     $this->removeEntities($entity);
                 }
 

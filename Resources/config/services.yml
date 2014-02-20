@@ -5,6 +5,7 @@ services:
 
     tms_model_io.form.type.import:
         class: Tms\Bundle\ModelIOBundle\Form\Type\ImportType
+        arguments: [false]
         tags:
             - { name: form.type, alias: tms_model_io_import }
 

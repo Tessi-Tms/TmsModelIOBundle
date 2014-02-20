@@ -11,6 +11,18 @@ use Symfony\Component\Form\FormBuilderInterface;
 
 class ImportType extends AbstractType
 {
+    private $removeCheckbox;
+
+    /**
+     * Constructor
+     *
+     * @param string $removeCheckbox
+     */
+    public function __construct($removeCheckbox)
+    {
+        $this->removeCheckbox = $removeCheckbox;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -21,11 +33,16 @@ class ImportType extends AbstractType
             ->add('attachment', 'file', array(
                 'mapped' => false
             ))
-            ->add('remove-existing-entries', 'checkbox', array(
-                'mapped' => false,
-                'required' => false
-            ))
         ;
+        if ($this->removeCheckbox) {
+            $builder
+                ->add('remove-existing-entries', 'checkbox', array(
+                    'mapped'   => false,
+                    'required' => false,
+                    'attr'     => array('class' => 'tmsmodelio_removal-warning')
+                ))
+            ;
+        }
     }
 
     /**

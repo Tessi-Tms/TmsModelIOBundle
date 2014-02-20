@@ -12,6 +12,7 @@
 # Texts
 "The file has been imported":                   "Le fichier a été importé"
 "The file has not been imported":               "Le fichier n'a pas été importé"
+"All the existing entries will be deleted. Confirm to proceed.": "Toutes les entrées existantes seront supprimées. Confirmez pour continuer."
 
 # Exceptions
 "A missing Import field has been detected":     "Un champ manquant a été détecté"
