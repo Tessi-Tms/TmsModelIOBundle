@@ -165,6 +165,11 @@ class ImportExportHandler
             if (!property_exists($object, $key)) {
                 throw new MissingImportFieldException();
             }
+
+            if ($key === 'id') {
+                return $this->objectManager->getRepository($this->className)->find($object->$key);
+            }
+
             $classMetadata->setFieldValue($importedObject, $key, $object->$key);
         }
 
