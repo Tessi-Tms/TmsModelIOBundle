@@ -5,6 +5,11 @@ Symfony2 bundle used to import and export data based on a model.
 
 Currently, all the objects (i.e.: entities, documents) are exported into a json file, and can be imported from a json file.
 
+This bundle contains a base IO controller you can extends in order to simplify your exports.
+It also comes with a basic Inport form.
+The How to section describes how to use it.
+
+
 Installation
 ------------
 
@@ -58,7 +63,6 @@ Configuration
 -------------
 
 Edit the configuration file of the bundle you want to import/export objects.
-
 e.g. : TmsOperationBundle
 
 
@@ -111,4 +115,57 @@ Here is an example:
             modes:
                 benefit_category:
                     - id
+```
+
+How to export and import your object
+------------------------------------
+
+Here is an exemple of export/import.
+See the OperationManager for a full example.
+
+
+```php
+class MyController extends AbstractIOController
+{
+    /**
+     * Export
+     */
+    public function exportAction()
+    {
+        $mode     = 'my_mode';                                 // Name of the mode
+        $entities = $this->get('my_repository')->findAll();    // Find your entities
+        $filename = 'my_export';                               // Name of the downloaded file
+
+        return parent::export($entities, $mode, $filename);
+    }
+    
+    /**
+     * Import
+     */
+    public function importAction(Request $request)
+    {
+        $modelName      = 'my_model_name';                                  // Name of the model
+        $mode           = 'my_mode';                                        // Name of the mode
+        $formAction     = $this->get('router')->generate('my_form_route');  // The route that process the import form (example: self)
+        $redirectUrl    = $this->generateUrl('my_redirect_url');            // The URL bo be redirected to after the import process
+        $removalAllowed = true;                                             // Set it to false if you do not want to give the users the possibility to delete the previous existing data by the form
+
+        return parent::import($request, $entity, $formAction, $modelName, $mode, $redirectUrl, $removalAllowed);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function importEntities(array $entities, $entity = null)
+    {
+        ... // Redefine here the way your data are added
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function removeEntities($entity = null)
+    {
+        ... // Redefine here the way your data are deleted
+    }
 ```
