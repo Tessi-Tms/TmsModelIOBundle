@@ -23,6 +23,6 @@ services:
         class: Tms\Bundle\ModelIOBundle\Serializer\ImportExportSerializer
         arguments: []
 
-    tms_model_io.io.import:
-        class: Tms\Bundle\ModelIOBundle\ImportExport\Import
+    tms_model_io.io.importer:
+        class: Tms\Bundle\ModelIOBundle\ImportExport\Importer
         arguments: [@jms_serializer]

@@ -6,9 +6,9 @@
 
 namespace Tms\Bundle\ModelIOBundle\ImportExport;
 
-use JMS\Serializer as Serializer;
+use JMS\Serializer\SerializerInterface;
 
-class Import
+class Importer
 {
     /**
      * JMSSerializer
@@ -18,7 +18,7 @@ class Import
     /**
      * constructor
      */
-    public function __contsruct(Serializer $serializer)
+    public function __construct(SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
     }
@@ -28,8 +28,9 @@ class Import
      *
      * @return true if service has been insticiate
      */
-    public function exists() {
-        return true;
+    public function exists() 
+    {
+        return "exists";
     }
 
     /**
@@ -57,7 +58,8 @@ class Import
      */
     public function import($objectManager, $entityName, $entityData, $format)
     {
-        $object = $this->createObject($entityName, $entityData);
+        $object = $this->createObject($entityName, $entityData, $format);
         $objectManager->persist($object);
+        $objectManager->flush();
     }
 }
