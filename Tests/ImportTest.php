@@ -8,36 +8,30 @@ use Doctrine\ORM\EntityManager;
 
 class ImportTest extends WebTestCase
 {
-
     public function testImportService()
     {
         $kernel = static::createKernel();
         $kernel->boot();
         $container = $kernel->getContainer();
 
-        $em =                $container->get('doctrine')->getManager();
-        $serializerService = $container->get('jms_serializer');
-        $this->assertInstanceOf("Doctrine\ORM\EntityManager", $em, "not a Manager");
-        $this->assertInstanceOf("JMS\Serializer\SerializerInterface", $serializerService, "not a Serializer");
+        $importService = $container->get('tms_model_io.importer');
 
-        $importService = $container->get('tms_model_io.io.importer');
-        $this->assertEquals("exists", $importService->exists());
-        $this->assertInstanceOf("JMS\Serializer\SerializerInterface", $importService->getSerializer(), "not a Serializer");
-
-        $entity = $importService->createObject(
+        $object = $importService->createObject(
             'Tms\Bundle\OperationBundle\Entity\Product',
             '{
                 "name":"test",
                 "shortDescription":"courte description",
                 "longDescription":"longue description",
                 "ean13":"1",
-                "customer":"1",
                 "refundable":"1"
-            }',
-            'json'
+            }'
         );
-        var_dump(print_r($entity));
-        $this->assertInstanceOf("Tms\Bundle\OperationBundle\Entity\Product", $entity, "not a Tms\Bundle\OperationBundle\Entity\Product");
+        var_dump(print_r($object));
+        $this->assertInstanceOf(
+            "Tms\Bundle\OperationBundle\Entity\Product",
+            $object,
+            "not a Tms\Bundle\OperationBundle\Entity\Product"
+        );
         // $name = "test" . sha1(date(""));
         // $importService->import(
         //     $em,

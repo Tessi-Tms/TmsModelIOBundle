@@ -7,16 +7,16 @@
 namespace Tms\Bundle\ModelIOBundle\ImportExport;
 
 use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\DeserializationContext;
 
 class Importer
 {
-    /**
-     * JMSSerializer
-     */
+    const SERIALIZER_CONTEXT_GROUP = 'tms_modelio';
+
     protected $serializer;
 
     /**
-     * constructor
+     * Constructor
      */
     public function __construct(SerializerInterface $serializer)
     {
@@ -24,17 +24,20 @@ class Importer
     }
 
     /**
-     * Testing method
+     * Get serializer context
      *
-     * @return true if service has been insticiate
+     * @return SerializationContext
      */
-    public function exists() 
+    public static function getContext()
     {
-        return "exists";
+        $context = DeserializationContext::create();
+        $context->setGroups(array(self::SERIALIZER_CONTEXT_GROUP));
+
+        return $context;
     }
 
     /**
-     * serializer getter
+     * Get serializer
      *
      * @return JMSSerializer
      */
@@ -44,22 +47,38 @@ class Importer
     }
 
     /**
-     * create manageable object from raw data
+     * Populate Object
      *
-     * @return Entity
+     * @param string $objectClassName
+     * @param string $data
+     * @param string $format
+     * @return object
      */
-    public function createObject($entityName, $entityData, $format)
+    protected function populateObject($objectClassName, $data, $format = 'json')
     {
-        return $this->getSerializer()->deserialize($entityData, $entityName, $format);
+        return $this
+            ->getSerializer()
+            ->deserialize(
+                $data,
+                $objectClassName,
+                $format,
+                self::getContext()
+            )
+        ;
     }
 
     /**
-     * persist raw data
+     * Import Object
+     *
+     * @param string $objectClassName
+     * @param string $data
+     * @param string $format
+     * @return object
      */
-    public function import($objectManager, $entityName, $entityData, $format)
+    public function import($objectClassName, $data, $format = 'json')
     {
-        $object = $this->createObject($entityName, $entityData, $format);
-        $objectManager->persist($object);
-        $objectManager->flush();
+        $object = $this->populateObject($objectClassName, $data, $format);
+
+        return $object;
     }
 }
