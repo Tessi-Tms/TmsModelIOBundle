@@ -21,6 +21,7 @@ class ImportObjectCommand extends ContainerAwareCommand
             ->addArgument('objectClassName', InputArgument::REQUIRED, 'The object class name to import')
             ->addArgument('objectData', InputArgument::REQUIRED, 'The object data serialized to import')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'The data format')
+            ->addOption('objectManager', null, InputOption::VALUE_REQUIRED, 'The objectManager')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command allow to import object.
 Here is an example:
@@ -43,6 +44,11 @@ EOT
             'json'
         ;
 
+        $objectManager = $input->getOption('objectManager') ?
+            $this->getContainer()->get($input->getOption('objectManager'))->getManager() :
+            $this->getContainer()->get('doctrine')->getManager() 
+        ;
+
         $importer = $this->getContainer()->get('tms_model_io.importer');
 
         try {
@@ -53,6 +59,8 @@ EOT
                 $format
             );
             var_dump($object);
+            $objectManager->persist($object);
+            $objectManager->flush();
             $output->writeln('<info>Object imported</info>');
         } catch (\Exception $e) {
             $output->writeln(sprintf('<error>The import failed: %s</error>', $e->getMessage()));
