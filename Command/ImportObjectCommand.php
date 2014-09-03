@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Doctrine\Bundle\DoctrineBundle\Command\Proxy\DoctrineCommandHelper;
 
 class ImportObjectCommand extends ContainerAwareCommand
 {
@@ -21,12 +22,24 @@ class ImportObjectCommand extends ContainerAwareCommand
             ->addArgument('objectClassName', InputArgument::REQUIRED, 'The object class name to import')
             ->addArgument('objectData', InputArgument::REQUIRED, 'The object data serialized to import')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'The data format')
-            ->addOption('objectManager', null, InputOption::VALUE_REQUIRED, 'The objectManager')
+            ->addOption('om', null, InputOption::VALUE_REQUIRED, 'The specified object manager to use for this command')
+            ->addOption('em', null, InputOption::VALUE_NONE, 'The entity manager to use for this command')
+            ->addOption('raw', null, InputOption::VALUE_NONE, 'The entity manager to use for this command')
+            ->addOption('dm', null, InputOption::VALUE_NONE, 'The document manager to use for this command')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command allow to import object.
-Here is an example:
+Here is some examples:
 
-<info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json </info>
+<info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json --om=default</info>
+which is equivalent to:
+<info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json --em</info>
+
+you could also use document manager:
+<info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json --dm</info>
+
+options <info>--dm --em --om</info> are exclusive, they can't be used together.
+
+default format is json and default object manager is default entity manager.
 EOT
             )
         ;
@@ -44,10 +57,23 @@ EOT
             'json'
         ;
 
-        $objectManager = $input->getOption('objectManager') ?
-            $this->getContainer()->get($input->getOption('objectManager'))->getManager() :
-            $this->getContainer()->get('doctrine')->getManager() 
-        ;
+        $sum = ($input->getOption('dm')? 1: 0) + ($input->getOption('em')? 1: 0) + ($input->getOption('om')? 1: 0);
+
+        if($sum !== 0 && $sum !== 1) {
+            throw new \Exception("<error>options <info>--dm --em --om</info> are exclusive, they can't be used together</error>", 1);
+        }
+
+        $config = 'doctrine.orm.entity_manager';
+        if ($input->getOption('dm')) {
+            $config = 'doctrine.odm.mongodb.document_manager';
+        }
+
+        $objectManager = $this->getContainer()->get($config);
+
+        if ($input->getOption('om')) {
+            $objectManager = $this->getContainer()->get('doctrine')->getManager();
+            DoctrineCommandHelper::setApplicationEntityManager($this->getApplication(), $input->getOption('om'));
+        }
 
         $importer = $this->getContainer()->get('tms_model_io.importer');
 
@@ -58,7 +84,7 @@ EOT
                 $objectData,
                 $format
             );
-            var_dump($object);
+
             $objectManager->persist($object);
             $objectManager->flush();
             $output->writeln('<info>Object imported</info>');
