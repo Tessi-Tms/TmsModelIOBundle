@@ -24,7 +24,6 @@ class ImportObjectCommand extends ContainerAwareCommand
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'The data format')
             ->addOption('om', null, InputOption::VALUE_REQUIRED, 'The specified object manager to use for this command')
             ->addOption('em', null, InputOption::VALUE_NONE, 'The entity manager to use for this command')
-            ->addOption('raw', null, InputOption::VALUE_NONE, 'The entity manager to use for this command')
             ->addOption('dm', null, InputOption::VALUE_NONE, 'The document manager to use for this command')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command allow to import object.
