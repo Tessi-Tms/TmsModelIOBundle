@@ -38,7 +38,7 @@ class ImporterEntity extends Importer
      *
      * @return Entity
      */
-    protected function persist(& $object)
+    public function persist(& $object)
     {
         $this->getEntityManager()->persist($object);
 

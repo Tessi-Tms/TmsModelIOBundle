@@ -54,7 +54,7 @@ abstract class Importer
      * @param string $format
      * @return object
      */
-    protected function populateObject($objectClassName, $data, $format = 'json')
+    public function populateObject($objectClassName, $data, $format = 'json')
     {
         return $this
             ->getSerializer()
@@ -70,7 +70,7 @@ abstract class Importer
     /**
      * persist given object
      */
-    abstract protected function persist(& $object);
+    abstract public function persist(& $object);
 
     /**
      * terminate transaction
@@ -89,6 +89,7 @@ abstract class Importer
     {
         $object = $this->populateObject($objectClassName, $data, $format);
         $this->persist($object);
+        $this->flush();
 
         return $object;
     }
