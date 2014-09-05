@@ -35,10 +35,14 @@ class ImporterEntity extends Importer
 
     /**
      * Persist given entity
+     *
+     * @return Entity
      */
     protected function persist(& $object)
     {
         $this->getEntityManager()->persist($object);
+
+        return $object;
     }
 
     /**
