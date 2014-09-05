@@ -12,9 +12,6 @@ use Doctrine\ORM\EntityManager;
 
 class ImporterEntity extends Importer
 {
-    /**
-     * entity manager
-     */
     protected $entityManager;
 
     /**
@@ -29,7 +26,7 @@ class ImporterEntity extends Importer
     /**
      * Get the entity manager
      *
-     * @return Manager the entity manager
+     * @return EntityManager the entity manager
      */
     public function getEntityManager()
     {
@@ -37,15 +34,15 @@ class ImporterEntity extends Importer
     }
 
     /**
-     * persist given entity
+     * Persist given entity
      */
-    protected function persist($object)
+    protected function persist(& $object)
     {
         $this->getEntityManager()->persist($object);
     }
 
     /**
-     * terminate transaction
+     * Flush
      */
     public function flush()
     {

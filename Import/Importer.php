@@ -70,7 +70,7 @@ abstract class Importer
     /**
      * persist given object
      */
-    abstract protected function persist($object);
+    abstract protected function persist(& $object);
 
     /**
      * terminate transaction

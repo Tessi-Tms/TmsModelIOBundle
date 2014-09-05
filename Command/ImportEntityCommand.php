@@ -17,7 +17,7 @@ class ImportEntityCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('tms:modelio:entity-import')
+            ->setName('tms:modelio:import-entity')
             ->setDescription('Import object based on serialized data')
             ->addArgument('objectClassName', InputArgument::REQUIRED, 'The object class name to import')
             ->addArgument('objectData', InputArgument::REQUIRED, 'The object data serialized to import')
@@ -55,18 +55,12 @@ EOT
         $importer = $this->getContainer()->get('tms_model_io.importer.entity');
 
         try {
-                $entity = $importer->import(
-                    $objectClassName,
-                    $objectData,
-                    $format
-                );
+            $entity = $importer->import(
+                $objectClassName,
+                $objectData,
+                $format
+            );
 
-                $entity2 = $importer->import(
-                    $objectClassName,
-                    $objectData,
-                    $format
-                );
-            
             $importer->flush();
             $output->writeln(sprintf('<info>Entity %s imported</info>', $entity->getId()));
 
