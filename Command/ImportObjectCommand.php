@@ -17,7 +17,7 @@ class ImportObjectCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('tms-modelio:import')
+            ->setName('tms:modelio:entity-import')
             ->setDescription('Import object based on serialized data')
             ->addArgument('objectClassName', InputArgument::REQUIRED, 'The object class name to import')
             ->addArgument('objectData', InputArgument::REQUIRED, 'The object data serialized to import')
