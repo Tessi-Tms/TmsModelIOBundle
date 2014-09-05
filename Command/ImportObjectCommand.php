@@ -75,6 +75,7 @@ EOT
             return $object->getId();
         } catch (\Exception $e) {
             $output->writeln(sprintf('<error>The import failed: %s</error>', $e->getMessage()));
+
             return -1;
         }
     }
