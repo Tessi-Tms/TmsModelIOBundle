@@ -4,12 +4,12 @@
  * @author: Julien ANDRE <j.andre@trepia.fr>
  */
 
-namespace Tms\Bundle\ModelIOBundle\ImportExport;
+namespace Tms\Bundle\ModelIOBundle\Import;
 
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\DeserializationContext;
 
-class Importer
+abstract class Importer
 {
     const SERIALIZER_CONTEXT_GROUP = 'tms_modelio';
 
@@ -68,6 +68,16 @@ class Importer
     }
 
     /**
+     * persist given object
+     */
+    abstract protected function persist($object);
+
+    /**
+     * terminate transaction
+     */
+    abstract public function flush();
+
+    /**
      * Import Object
      *
      * @param string $objectClassName
@@ -78,6 +88,7 @@ class Importer
     public function import($objectClassName, $data, $format = 'json')
     {
         $object = $this->populateObject($objectClassName, $data, $format);
+        $this->persist($object);
 
         return $object;
     }
