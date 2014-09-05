@@ -10,12 +10,15 @@ use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\DeserializationContext;
 use Doctrine\ORM\EntityManager;
 
-class ImporterEntity extends Importer
+class EntityImporter extends AbstractImporter
 {
     protected $entityManager;
 
     /**
      * Constructor
+     *
+     * @param SerializerInterface $serializer
+     * @param EntityManager       $entityManager
      */
     public function __construct(SerializerInterface $serializer, EntityManager $entityManager)
     {
@@ -26,7 +29,7 @@ class ImporterEntity extends Importer
     /**
      * Get the entity manager
      *
-     * @return EntityManager the entity manager
+     * @return EntityManager
      */
     public function getEntityManager()
     {
@@ -34,19 +37,17 @@ class ImporterEntity extends Importer
     }
 
     /**
-     * Persist given entity
-     *
-     * @return Entity
+     * {@inheritdoc}
      */
     public function persist(& $object)
     {
         $this->getEntityManager()->persist($object);
 
-        return $object;
+        return $this;
     }
 
     /**
-     * Flush
+     * {@inheritdoc}
      */
     public function flush()
     {

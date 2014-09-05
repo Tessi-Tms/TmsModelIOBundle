@@ -18,23 +18,17 @@ class ImportEntityCommand extends ContainerAwareCommand
     {
         $this
             ->setName('tms:modelio:import-entity')
-            ->setDescription('Import object based on serialized data')
-            ->addArgument('objectClassName', InputArgument::REQUIRED, 'The object class name to import')
-            ->addArgument('objectData', InputArgument::REQUIRED, 'The object data serialized to import')
+            ->setDescription('Import entity based on serialized data')
+            ->addArgument('entityClassName', InputArgument::REQUIRED, 'The entity class name to import')
+            ->addArgument('entityData', InputArgument::REQUIRED, 'The entity data serialized to import')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'The data format')
-            ->addOption('em', null, InputOption::VALUE_OPTIONAL, 'The entity manager to use for this command', 'default')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command allow to import object.
 Here is some examples:
 
-<info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json --em=default</info>
-which is equivalent to:
 <info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json</info>
 
-you could also specify the entity manager:
-<info>php app/console %command.name% CLASSNAME {JSON_DATA} --format=json --em=my_manager</info>
-
-default format is json and default entity manager is the default.
+The default format is json.
 EOT
             )
         ;
@@ -45,8 +39,8 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $objectClassName = $input->getArgument('objectClassName');
-        $objectData      = $input->getArgument('objectData');
+        $entityClassName = $input->getArgument('entityClassName');
+        $entityData      = $input->getArgument('entityData');
         $format          = $input->getOption('format') ?
             $input->getOption('format') :
             'json'
@@ -56,12 +50,11 @@ EOT
 
         try {
             $entity = $importer->import(
-                $objectClassName,
-                $objectData,
+                $entityClassName,
+                $entityData,
                 $format
             );
 
-            $importer->flush();
             $output->writeln(sprintf('<info>Entity %s imported</info>', $entity->getId()));
 
             return $entity->getId();

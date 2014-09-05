@@ -9,7 +9,7 @@ namespace Tms\Bundle\ModelIOBundle\Import;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\DeserializationContext;
 
-abstract class Importer
+abstract class AbstractImporter
 {
     const SERIALIZER_CONTEXT_GROUP = 'tms_modelio';
 
@@ -68,12 +68,15 @@ abstract class Importer
     }
 
     /**
-     * persist given object
+     * Persist the given object
+     *
+     * @param  object $object
+     * @return AbstractImporter
      */
     abstract public function persist(& $object);
 
     /**
-     * terminate transaction
+     * Flush
      */
     abstract public function flush();
 
@@ -88,8 +91,10 @@ abstract class Importer
     public function import($objectClassName, $data, $format = 'json')
     {
         $object = $this->populateObject($objectClassName, $data, $format);
-        $this->persist($object);
-        $this->flush();
+        $this
+            ->persist($object)
+            ->flush()
+        ;
 
         return $object;
     }
