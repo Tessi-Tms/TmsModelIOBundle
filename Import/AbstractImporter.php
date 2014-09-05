@@ -47,14 +47,14 @@ abstract class AbstractImporter
     }
 
     /**
-     * Populate Object
+     * Create Object
      *
      * @param string $objectClassName
      * @param string $data
      * @param string $format
      * @return object
      */
-    public function populateObject($objectClassName, $data, $format = 'json')
+    public function createObject($objectClassName, $data, $format = 'json')
     {
         return $this
             ->getSerializer()
@@ -90,7 +90,7 @@ abstract class AbstractImporter
      */
     public function import($objectClassName, $data, $format = 'json')
     {
-        $object = $this->populateObject($objectClassName, $data, $format);
+        $object = $this->createObject($objectClassName, $data, $format);
         $this
             ->persist($object)
             ->flush()
