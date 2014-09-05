@@ -61,18 +61,17 @@ EOT
         $importer = $this->getContainer()->get('tms_model_io.importer');
 
         try {
-            $output->writeln('<info>Start object import</info>');
-            $object = $importer->import(
+            $entity = $importer->import(
                 $objectClassName,
                 $objectData,
                 $format
             );
 
-            $entityManager->persist($object);
+            $entityManager->persist($entity);
             $entityManager->flush();
-            $output->writeln(sprintf('<info>Object %s imported</info>', $object->getId()));
+            $output->writeln(sprintf('<info>Entity %s imported</info>', $entity->getId()));
 
-            return $object->getId();
+            return $entity->getId();
         } catch (\Exception $e) {
             $output->writeln(sprintf('<error>The import failed: %s</error>', $e->getMessage()));
 
