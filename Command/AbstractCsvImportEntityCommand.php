@@ -146,7 +146,7 @@ EOT
             ;
 
             // Pre persist action
-            $this->prePersist($entity);
+            $this->prePersist($row, $entity);
 
             // Persist and flush
             $this
@@ -156,7 +156,7 @@ EOT
             ;
 
             // Post persist action
-            $this->postPersist($entity);
+            $this->postPersist($row, $entity);
 
             $output->writeln(sprintf(
                 '<info>l%d > %s imported: created with id [%d]</info>',
@@ -183,18 +183,20 @@ EOT
     /**
      * Pre persist
      *
+     * @param array  $row
      * @param object $entity
      */
-    protected function prePersist(& $entity)
+    protected function prePersist($row, & $entity)
     {
     }
 
     /**
      * Post persist
      *
+     * @param array  $row
      * @param object $entity
      */
-    protected function postPersist(& $entity)
+    protected function postPersist($row, & $entity)
     {
     }
 
