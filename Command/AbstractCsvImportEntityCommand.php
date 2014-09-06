@@ -125,47 +125,50 @@ EOT
 
         $rows = $this->loadData($filepath, $hasHeader);
         foreach ($rows as $i => $row) {
-            if ($id = $this->checkExistingRow($row)) {
+            try {
+                // Check if the object already exist
+                $this->checkExistingRow($row);
+
+                // Create the Object
+                $entity = $this
+                    ->getEntityImporter()
+                    ->createObject(
+                        $this->getClassName(),
+                        json_encode($row)
+                    )
+                ;
+
+                // Pre persist action
+                $this->prePersist($row, $entity);
+
+                // Persist and flush
+                $this
+                    ->getEntityImporter()
+                    ->persist($entity)
+                    ->flush()
+                ;
+
+                // Post persist action
+                $this->postPersist($row, $entity);
+
                 $output->writeln(sprintf(
-                    '<error>l%d > %s not imported: Already exists with id [%d]</error>',
+                    '<info>l%d > %s imported: created with id [%d]</info>',
                     $i + 1,
                     $this->getClassName(),
-                    $id
+                    $entity->getId()
+                ));
+
+                $countImported++;
+            } catch (\Exception $e) {
+                $output->writeln(sprintf(
+                    '<error>l%d > %s not imported: %s</error>',
+                    $i + 1,
+                    $this->getClassName(),
+                    $e->getMessage()
                 ));
 
                 continue;
             }
-
-            // Create the Object
-            $entity = $this
-                ->getEntityImporter()
-                ->createObject(
-                    $this->getClassName(),
-                    json_encode($row)
-                )
-            ;
-
-            // Pre persist action
-            $this->prePersist($row, $entity);
-
-            // Persist and flush
-            $this
-                ->getEntityImporter()
-                ->persist($entity)
-                ->flush()
-            ;
-
-            // Post persist action
-            $this->postPersist($row, $entity);
-
-            $output->writeln(sprintf(
-                '<info>l%d > %s imported: created with id [%d]</info>',
-                $i + 1,
-                $this->getClassName(),
-                $entity->getId()
-            ));
-
-            $countImported++;
         }
 
         $timeEnd = microtime(true);
@@ -185,9 +188,11 @@ EOT
      *
      * @param array  $row
      * @param object $entity
+     * @throw \Exception If an error occured
      */
     protected function prePersist($row, & $entity)
     {
+        return true;
     }
 
     /**
@@ -195,9 +200,11 @@ EOT
      *
      * @param array  $row
      * @param object $entity
+     * @throw \Exception If an error occured
      */
     protected function postPersist($row, & $entity)
     {
+        return true;
     }
 
     /**
@@ -211,8 +218,8 @@ EOT
     /**
      * Check if the row was already imported
      *
-     * @param  array $row A mapped data
-     * @return integer|false If exist return the Entity id, false otherwise
+     * @param array $row A mapped data
+     * @throw \Exception If entity exist
      */
     abstract protected function checkExistingRow(array $row);
 
