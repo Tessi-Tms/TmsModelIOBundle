@@ -17,6 +17,11 @@ abstract class AbstractCsvImportEntityCommand extends ContainerAwareCommand
     protected $defaultFilePath = 'undefined';
 
     /**
+     * @var string
+     */
+    protected $filePath = null;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -81,14 +86,13 @@ EOT
     /**
      * Load data
      *
-     * @param  string  $filePath
      * @param  boolean $hasHeader
      * @return array
      */
-    protected function loadData($filePath, $hasHeader = true)
+    protected function loadData($hasHeader = true)
     {
         $rows = array();
-        if (($handle = fopen($filePath, "r")) !== FALSE) {
+        if (($handle = fopen($this->filePath, "r")) !== FALSE) {
             while (($data = fgetcsv($handle, 5000, ";", '"')) !== FALSE) {
                 $row = $this->createMappedRowData($data);
                 if (null !== $row) {
@@ -113,8 +117,8 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $timeStart = microtime(true);
-        $filepath  = $input->getArgument('filePath');
         $hasHeader = $input->getOption('with-header');
+        $this->filePath  = $input->getArgument('filePath');
 
         $countImported = 0;
 
@@ -123,7 +127,7 @@ EOT
             $this->getClassName()
         ));
 
-        $rows = $this->loadData($filepath, $hasHeader);
+        $rows = $this->loadData($hasHeader);
         foreach ($rows as $i => $row) {
             try {
                 // Check if the object already exist
