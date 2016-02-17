@@ -33,6 +33,13 @@ class EntityImporter extends AbstractImporter
      */
     public function getEntityManager()
     {
+        if (!$this->entityManager->isOpen()) {
+            $this->entityManager = $this->entityManager->create(
+                $this->entityManager->getConnection(),
+                $this->entityManager->getConfiguration()
+            );
+        }
+
         return $this->entityManager;
     }
 
@@ -52,5 +59,17 @@ class EntityImporter extends AbstractImporter
     public function flush()
     {
         $this->getEntityManager()->flush();
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function clear()
+    {
+        $this->getEntityManager()->clear();
+
+        return $this;
     }
 }

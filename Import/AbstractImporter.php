@@ -77,8 +77,17 @@ abstract class AbstractImporter
 
     /**
      * Flush
+     *
+     * @return AbstractImporter
      */
     abstract public function flush();
+
+    /**
+     * Clear
+     *
+     * @return AbstractImporter
+     */
+    abstract public function clear();
 
     /**
      * Import Object

@@ -162,6 +162,7 @@ EOT
                     $entity->getId()
                 ));
 
+                $this->getEntityImporter()->clear();
                 $countImported++;
             } catch (\Exception $e) {
                 $output->writeln(sprintf(
