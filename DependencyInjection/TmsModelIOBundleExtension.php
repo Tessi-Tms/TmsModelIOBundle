@@ -29,6 +29,7 @@ class TmsModelIOBundleExtension extends Extension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+        $loader->load('config.yml');
 
         $container->setParameter('tms_model_io', $config);
     }
