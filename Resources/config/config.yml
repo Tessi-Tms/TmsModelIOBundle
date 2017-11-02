@@ -1,2 +1,2 @@
 parameters:
-    import_directory: %kernel.root_dir%/cache/Upload/
+    import_directory: "%kernel.root_dir%/cache/Upload/"
