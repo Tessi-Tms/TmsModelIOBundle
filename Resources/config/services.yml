@@ -1,21 +1,31 @@
 services:
     tms_model_io.handler.file_handler:
         class: Tms\Bundle\ModelIOBundle\Handler\FileHandler
-        arguments: [%import_directory%]
+        arguments:
+            - '%import_directory%'
 
     tms_model_io.form.type.import:
         class: Tms\Bundle\ModelIOBundle\Form\Type\ImportType
-        arguments: [false]
+        arguments:
+            - false
         tags:
             - { name: form.type, alias: tms_model_io_import }
 
     tms_model_io.manager.import_export_manager:
         class: Tms\Bundle\ModelIOBundle\Manager\ImportExportManager
-        arguments: [@tms_model_io.serializer.import_export_serializer]
+        arguments:
+            - '@tms_model_io.serializer.import_export_serializer'
 
     tms_model_io.handler.import_export_handler:
         class: Tms\Bundle\ModelIOBundle\Handler\ImportExportHandler
-        arguments: [null, null, null, null, null, null, @tms_model_io.manager.import_export_manager]
+        arguments:
+            - null
+            - null
+            - null
+            - null
+            - null
+            - null
+            - '@tms_model_io.manager.import_export_manager'
         abstract: true
         public: false
 
@@ -25,4 +35,6 @@ services:
 
     tms_model_io.importer.entity:
         class: Tms\Bundle\ModelIOBundle\Import\EntityImporter
-        arguments: [@jms_serializer, @doctrine.orm.entity_manager]
+        arguments:
+            - '@jms_serializer'
+            - '@doctrine.orm.entity_manager'
