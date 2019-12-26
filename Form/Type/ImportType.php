@@ -8,21 +8,12 @@ namespace Tms\Bundle\ModelIOBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\Extension\Core\Type as SfType;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 class ImportType extends AbstractType
 {
-    private $removeCheckbox;
-
-    /**
-     * Constructor
-     *
-     * @param string $removeCheckbox
-     */
-    public function __construct($removeCheckbox)
-    {
-        $this->removeCheckbox = $removeCheckbox;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -30,13 +21,14 @@ class ImportType extends AbstractType
     {
         parent::buildForm($builder, $options);
         $builder
-            ->add('attachment', 'file', array(
+            ->add('attachment', SfType\FileType::class, array(
                 'mapped' => false
             ))
         ;
-        if ($this->removeCheckbox) {
+
+        if ($options['remove_checkbox']) {
             $builder
-                ->add('remove-existing-entries', 'checkbox', array(
+                ->add('remove-existing-entries', SfType\CheckboxType::class, array(
                     'mapped'   => false,
                     'required' => false,
                     'attr'     => array('class' => 'tmsmodelio_removal-warning')
@@ -48,8 +40,40 @@ class ImportType extends AbstractType
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function configureOptions(OptionsResolver $resolver)
+    {
+        $resolver
+            ->setDefaults(array('remove_checkbox' => false))
+            ->setAllowedTypes('remove_checkbox', array('bool'))
+            ->setAllowedValues('remove_checkbox', array(true, false))
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @deprecated
+     */
+    public function setDefaultOptions(OptionsResolverInterface $resolver)
+    {
+        $this->configureOptions($resolver);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBlockPrefix()
     {
         return 'tms_model_io_import';
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @deprecated
+     */
+    public function getName()
+    {
+        return $this->getBlockPrefix();
     }
 }
