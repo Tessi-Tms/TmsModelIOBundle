@@ -27,6 +27,7 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->booleanNode('compress')->defaultTrue()->end()
                 ->arrayNode('models')
                     ->useAttributeAsKey('')
                     ->prototype('array')

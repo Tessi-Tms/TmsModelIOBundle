@@ -19,18 +19,36 @@ abstract class AbstractIOController extends Controller
     /**
      * Export
      *
-     * @param array       $entities      // Array of entities to export
-     * @param string      $mode          // Mode - The way data are exported
-     * @param string|null $filename      // Name of the generated file
+     * @param array        $entities      // Array of entities to export
+     * @param string       $mode          // Mode - The way data are exported
+     * @param string|null  $filename      // Name of the generated file
+     * @param boolean|null $compress      // Compress the exported file
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    protected function export(array $entities, $mode, $filename = null)
+    protected function export(array $entities, $mode, $filename = null, $compress = null)
     {
+        // Default value for the compress parameter
+        if (is_null($compress)) {
+            $parameters = $this->container->getParameter('tms_model_io', array());
+            $compress = isset($parameters['compress']) ? $parameters['compress'] : true;
+        }
+
+        // Generate the file content
         $content = $this->get('tms_model_io.manager.import_export_manager')->export($entities, $mode);
+
+        // File options
         $filename = sprintf('%s.json', $filename ? $filename : 'export');
+        $contentType = 'application/json';
+        if ($compress && function_exists('gzencode')) {
+            $filename = sprintf('%s.gz', $filename);
+            $contentType = 'application/json+gzip';
+            $content = gzencode($content);
+        }
+
 
         $response = new Response($content);
-        $response->headers->set('Content-type', 'application/json');
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Content-type', $contentType);
         $response->headers->set('Content-Disposition', sprintf('attachment; filename=%s', $filename));
 
         return $response;
