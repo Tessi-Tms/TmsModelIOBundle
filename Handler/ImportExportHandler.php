@@ -109,7 +109,10 @@ class ImportExportHandler
             }
 
             if (ImportExportManager::isProxyClass(new \ReflectionClass($object))) {
-                $getter = 'get' . ImportExportManager::camelize($key);
+                $getter = sprintf('get%s', ImportExportManager::camelize($key));
+                if (!method_exists($object, $getter)) {
+                    $getter = sprintf('is%s', ImportExportManager::camelize($key));
+                }
                 $exportedObject[$key] = $object->$getter();
             } else {
                 $exportedObject[$key] = $classMetadata->getFieldValue($object, $key);
