@@ -12,18 +12,25 @@ use Tms\Bundle\ModelIOBundle\Exception\UnvalidContentException;
 
 class FileHandler
 {
-    private static $importDirectory;
-    private static $allowedExtensions = array('json');
+    /**
+     * Expected file type.
+     *
+     * @var array
+     */
+    private static $allowedMimeTypes = array(
+        'application/json',
+    );
 
     /**
-     * Constructor
+     * Zipped file type.
      *
-     * @param string $importDirectory
+     * @var array
      */
-    public function __construct($importDirectory)
-    {
-        self::$importDirectory = $importDirectory;
-    }
+    private static $zippedMimeTypes = array(
+        'application/json+gzip',
+        'application/gzip',
+        'application/x-gzip',
+    );
 
     /**
      * Read the content of the uploaded file
@@ -33,43 +40,30 @@ class FileHandler
      */
     public function fileImport(UploadedFile $file)
     {
-        self::checkFile($file);
-
-        if (!is_dir(self::$importDirectory)) {
-            mkdir(self::$importDirectory, 0755);
+        // Check the file type
+        if (!in_array($file->getMimeType(), array_merge(self::$allowedMimeTypes, self::$zippedMimeTypes))) {
+            throw new BadFileExtensionException();
         }
 
-        $filename = sprintf('%s.%s',
-            md5($file->getClientOriginalName()),
-            pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION)
-        );
-        $file->move(self::$importDirectory, $filename);
-        $filePath = self::$importDirectory . $filename;
+        // Read the file content
+        $content = '';
+        if ($splFileObject = $file->openFile()) {
+            while (!$splFileObject->eof()) {
+                $content .= $splFileObject->fgets();
+            }
+        }
 
-        $handler = fopen($filePath, 'r');
-        $content = fread($handler, filesize($filePath));
-        fclose($handler);
-        unlink($filePath);
+        // Uncompress content
+        if (in_array($file->getMimeType(), self::$zippedMimeTypes)) {
+            $content = gzdecode($content);
+        }
 
+        // Is the content JSON valid ?
         if (!self::isValidJson($content)) {
             throw new UnvalidContentException();
         }
 
         return $content;
-    }
-
-    /**
-     * Check if a file is valid
-     *
-     * @param UploadedFile $file
-     * @throws BadFileExtensionException
-     */
-    protected static function checkFile(UploadedFile $file)
-    {
-        $extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
-        if (!in_array($extension, self::$allowedExtensions)) {
-            throw new BadFileExtensionException();
-        }
     }
 
     /**
