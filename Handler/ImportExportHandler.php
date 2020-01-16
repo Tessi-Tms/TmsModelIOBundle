@@ -143,7 +143,11 @@ class ImportExportHandler
                 $isCollection = false;
             }
 
-            $exportedObject[$key] = $this->importExportManager->exportNoSerialization($fieldValues, ($this->fields[$key] ? $this->fields[$key] : 'default'), $isCollection);
+            $exportedObject[$key] = $this->importExportManager->exportNoSerialization(
+                $fieldValues,
+                isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default',
+                $isCollection
+            );
         }
 
         return $exportedObject;
@@ -186,7 +190,15 @@ class ImportExportHandler
             }
 
             if ($object->$key) {
-                $classMetadata->setFieldValue($importedObject, $key, $this->importExportManager->importNoDeserialization($object->$key, $key, $this->fields[$key] ? $this->fields[$key] : 'default'));
+                $classMetadata->setFieldValue(
+                    $importedObject,
+                    $key,
+                    $this->importExportManager->importNoDeserialization(
+                        $object->$key,
+                        isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
+                        isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
+                    )
+                );
             } else {
                 $emptyValue = null;
                 if (is_array($object->$key)) {
@@ -206,11 +218,18 @@ class ImportExportHandler
      *    'onlineEnabled' => null
      *    'offlineEnabled' => null
      *    'previewBallotBeforeDownloadEnabled' => null
-     *    'eligibilities' => string 'simple' (length=6)
-     *    'steps' => string 'simple' (length=6)
-     *    'benefits' => string 'simple' (length=6)
+     *    'eligibilities' => array(
+     *          'mode' => string 'simple' (length=6)
+     *     )
+     *    'steps' => array(
+     *          'mode' => string 'simple' (length=6)
+     *     )
+     *    'benefits' => array(
+     *          'mode' => string 'simple' (length=6)
+     *     )
      *
      * @param array $fields
+     *
      * @return array
      */
     private function checkAndPrepareFields(array $fields)
@@ -236,8 +255,8 @@ class ImportExportHandler
             }
 
             // Get the mode of the field if it is defined
-            if (is_array($field[key($field)]) && isset($field[key($field)]['mode'])) {
-                $preparedFields[key($field)] = $field[key($field)]['mode'];
+            if (is_array($field[key($field)])) {
+                $preparedFields[key($field)] = $field[key($field)];
             } else {
                 $preparedFields[key($field)] = null;
             }
