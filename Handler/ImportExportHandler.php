@@ -7,20 +7,69 @@
 namespace Tms\Bundle\ModelIOBundle\Handler;
 
 use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
+use Tms\Bundle\ModelIOBundle\Exception\AlreadyExistingEntityException;
 use Tms\Bundle\ModelIOBundle\Exception\MissingImportFieldException;
 
 class ImportExportHandler
 {
-    private $objectManager;        // Object Manager used (eg: doctrine)
-    private $className;            // Name of the class (eg: Tms\Bundle\OperationBundle\Entity\Benefit)
-    private $modelName;            // Name of the model (eg: benefit)
-    private $mode;                 // Defined mode (eg: simple)
-    private $fields;               // Array of fields to import/export
-    private $aliases;              // Array of aliases given to the manager
-    private $importExportManager;  // The Import/Export Manager
+    /**
+     * Object Manager used (eg: doctrine).
+     *
+     * @var Object
+     */
+    private $objectManager;
 
     /**
-     * Constructor
+     * Name of the class (eg: Tms\Bundle\OperationBundle\Entity\Benefit).
+     *
+     * @var string
+     */
+    private $className;
+
+    /**
+     * Name of the model (eg: benefit).
+     *
+     * @var string
+     */
+    private $modelName;
+
+    /**
+     * Defined mode (eg: simple).
+     *
+     * @var string
+     */
+    private $mode;
+
+    /**
+     * Array of fields to import/export.
+     *
+     * @var array
+     */
+    private $fields;
+
+    /**
+     * Array of aliases given to the manager.
+     *
+     * @var array
+     */
+    private $aliases;
+
+    /**
+     * All the newly created entities.
+     *
+     * @var array
+     */
+    private $importedEntities;
+
+    /**
+     * The Import/Export Manager.
+     *
+     * @var ImportExportManager
+     */
+    private $importExportManager;
+
+    /**
+     * Constructor.
      *
      * @param Object              $objectManager
      * @param string              $className
@@ -30,19 +79,27 @@ class ImportExportHandler
      * @param array               $aliases
      * @param ImportExportManager $importExportManager
      */
-    public function __construct($objectManager, $className, $modelName, $mode, array $fields, array $aliases, ImportExportManager $importExportManager)
-    {
-        $this->objectManager       = $objectManager->getManager();
-        $this->className           = $className;
-        $this->modelName           = $modelName;
-        $this->mode                = $mode;
-        $this->fields              = $this->checkAndPrepareFields($fields);
-        $this->aliases             = $aliases;
+    public function __construct(
+        $objectManager,
+        $className,
+        $modelName,
+        $mode,
+        array $fields,
+        array $aliases,
+        ImportExportManager $importExportManager
+    ) {
+        $this->objectManager = $objectManager->getManager();
+        $this->className = $className;
+        $this->modelName = $modelName;
+        $this->mode = $mode;
+        $this->fields = $this->checkAndPrepareFields($fields);
+        $this->aliases = $aliases;
+        $this->importedEntities = array();
         $this->importExportManager = $importExportManager;
     }
 
     /**
-     * Get ClassName
+     * Get ClassName.
      *
      * @return string
      */
@@ -52,7 +109,7 @@ class ImportExportHandler
     }
 
     /**
-     * Get ModelName
+     * Get ModelName.
      *
      * @return string
      */
@@ -62,7 +119,7 @@ class ImportExportHandler
     }
 
     /**
-     * Get Mode
+     * Get Mode.
      *
      * @return string
      */
@@ -72,7 +129,7 @@ class ImportExportHandler
     }
 
     /**
-     * Get Fields
+     * Get Fields.
      *
      * @return array
      */
@@ -82,7 +139,7 @@ class ImportExportHandler
     }
 
     /**
-     * Get Aliases
+     * Get Aliases.
      *
      * @return array
      */
@@ -92,9 +149,10 @@ class ImportExportHandler
     }
 
     /**
-     * Export a given object
+     * Export a given object.
      *
      * @param Object $object
+     *
      * @return array
      */
     public function exportObject($object)
@@ -124,6 +182,7 @@ class ImportExportHandler
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
             }
+
             $fieldValue = $classMetadata->getFieldValue($object, $key);
             if (!$fieldValue) {
                 $exportedObject[$key] = $fieldValue;
@@ -157,58 +216,261 @@ class ImportExportHandler
      * Import an object
      *
      * @param array $object
+     *
      * @return Object
      */
     public function importObject($object)
     {
+        // Verify the data integrity
+        $this->checkData($object);
+
+        // Retrieve an existing entity
+        $entity = $this->retrieveEntity($object);
+        if ($entity instanceof $this->className) {
+            return $this->keepAndReturn($object, $entity);
+        }
+
+        // Check the object unicity
+        $this->checkUnicity($object);
+
+        // Extract the entity metadatas
         $classMetadata = $this->objectManager->getClassMetadata($this->className);
-        $importedObject = new $this->className();
 
-        $fieldMappings = $classMetadata->fieldMappings;
-        foreach ($fieldMappings as $key => $fieldMapping) {
-            if (!in_array($key, array_keys($this->fields))) {
+        // Create a new entity
+        $entity = new $this->className();
+
+        // Set the value of simple fields
+        foreach ($classMetadata->fieldMappings as $key => $fieldMapping) {
+            if (!property_exists($object, $key)) {
                 continue;
             }
-            if (!property_exists($object, $key)) {
-                throw new MissingImportFieldException();
+
+            // Transform stdClass to data
+            $data = $object->$key;
+            if ($data instanceof \stdClass) {
+                $data = (array) $data;
             }
 
-            if ($key === 'id') {
-                return $this->objectManager->getRepository($this->className)->find($object->$key);
-            }
-
-            $classMetadata->setFieldValue($importedObject, $key, $object->$key);
+            $classMetadata->setFieldValue($entity, $key, $data);
         }
 
-        $associationMappings = $classMetadata->associationMappings;
-        foreach ($associationMappings as $key => $properties) {
-            if (!in_array($key, array_keys($this->fields))) {
-                continue;
-            }
-            if (!property_exists($object, $key)) {
-                throw new MissingImportFieldException();
-            }
+        // Save and return the entity
+        return $this->keepAndReturn($object, $entity);
 
-            if ($object->$key) {
-                $classMetadata->setFieldValue(
-                    $importedObject,
-                    $key,
-                    $this->importExportManager->importNoDeserialization(
-                        $object->$key,
-                        isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
-                        isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
-                    )
-                );
-            } else {
-                $emptyValue = null;
-                if (is_array($object->$key)) {
-                    $emptyValue = array();
+
+        //
+        // // Set the values of associated fields
+        // $associationMappings = $classMetadata->associationMappings;
+        // foreach ($associationMappings as $key => $properties) {
+        //     if (!in_array($key, array_keys($this->fields))) {
+        //         continue;
+        //     }
+        //
+        //     if (!property_exists($object, $key)) {
+        //         throw new MissingImportFieldException();
+        //     }
+        //
+        //     if ($object->$key) {
+        //         $classMetadata->setFieldValue(
+        //             $importedObject,
+        //             $key,
+        //             $this->importExportManager->importNoDeserialization(
+        //                 $object->$key,
+        //                 isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
+        //                 isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
+        //             )
+        //         );
+        //     } else {
+        //         $emptyValue = null;
+        //         if (is_array($object->$key)) {
+        //             $emptyValue = array();
+        //         }
+        //         $classMetadata->setFieldValue($importedObject, $key, $emptyValue);
+        //     }
+        // }
+        //
+        // // Return the created entity
+        // return $importedObject;
+    }
+
+    /**
+     * Get the unique constraints of an object.
+     *
+     * @param mixed $object The object
+     *
+     * @return array
+     */
+    protected function getUniqueConstraints($object)
+    {
+        // Extract the entity metadatas
+        $classMetadata = $this->objectManager->getClassMetadata($this->className);
+
+        $uniqueConstraints = array();
+        if (isset($classMetadata->table['uniqueConstraints'])) {
+
+            // Parse the unique constraints in table metadata
+            foreach ($classMetadata->table['uniqueConstraints'] as $key => $value) {
+                $fields = array();
+                if (isset($value['columns'])) {
+
+                    // Get the constraint fields and values
+                    foreach ($value['columns'] as $column) {
+                        if (!isset($object->$column)) {
+                            $fields = array();
+
+                            break;
+                        }
+
+                        $fields[$column] = $object->$column;
+                    }
+
+                    // Ignore constraints without fields values
+                    if (empty($fields)) {
+                        continue;
+                    }
+
+                    $uniqueConstraints[$key] = $fields;
                 }
-                $classMetadata->setFieldValue($importedObject, $key, $emptyValue);
             }
         }
 
-        return $importedObject;
+        return $uniqueConstraints;
+    }
+
+    /**
+     * Generate the hashes of the entities for each unique constraints.
+     *
+     * @param mixed $object The object to import.
+     *
+     * @return array
+     */
+    public function generateEntityHashes($object)
+    {
+        $hashes = array();
+        foreach ($this->getUniqueConstraints($object) as $key => $value) {
+            $hashes[] = md5(serialize(array_merge($value, array(
+                'className' => $this->className,
+                'uniqueKey' => $key,
+            ))));
+        }
+
+        return $hashes;
+    }
+
+    /**
+     * Retrieve an existing entity or a newly created one.
+     * Will return null if no entity are found.
+     *
+     * @param mixed $object The object to retrieve
+     *
+     * @return object|null
+     */
+    protected function retrieveEntity($object)
+    {
+        // Search in already created/funded entities
+        foreach ($this->generateEntityHashes($object) as $hash) {
+            if (isset($this->importedEntities[$hash])) {
+                return $this->importedEntities[$hash];
+            }
+        }
+
+        // Extract the entity metadatas
+        $classMetadata = $this->objectManager->getClassMetadata($this->className);
+
+        // Get the object identifiers
+        $identifiers = array();
+        foreach ($classMetadata->identifier as $key => $value) {
+            if (isset($object->$value)) {
+                $identifiers[$value] = $object->$value;
+
+                // Ignore foreign ids
+                if ($object->$value instanceof \stdClass) {
+                    $identifiers = array();
+
+                    break;
+                }
+            }
+        }
+
+        // Search the entity in the database by its identifiers
+        if (!empty($identifiers)) {
+            $entity = $this->objectManager->getRepository($this->className)->findOneBy($identifiers);
+
+            // Return the existing entity
+            if ($entity instanceof $this->className) {
+                return $entity;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check the unicity of the object to import.
+     *
+     * @param mixed $object The object to import
+     *
+     * @return boolean
+     *
+     * @throws AlreadyExistingEntityException
+     */
+    protected function checkUnicity($object)
+    {
+        foreach ($this->getUniqueConstraints($object) as $fields) {
+            $entity = $this->objectManager->getRepository($this->className)->findOneBy($fields);
+
+            // Return the existing entity
+            if ($entity instanceof $this->className) {
+                throw new AlreadyExistingEntityException($this->className, $fields);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check the object data.
+     *
+     * @param mixed $object The object to import
+     *
+     * @return boolean
+     *
+     * @throws MissingImportFieldException
+     */
+    protected function checkData($object)
+    {
+        // Check missing fields data
+        foreach ($this->fields as $key => $value) {
+            if (!property_exists($object, $key)) {
+                throw new MissingImportFieldException($key);
+            }
+        }
+
+        // Check excess data
+        foreach (get_object_vars($object) as $key => $value) {
+            if (!in_array($key, array_keys($this->fields))) {
+                throw new MissingImportFieldException($key);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Keep the entity in memory to avoid multiple loading and return it.
+     *
+     * @param mixed $object The initial object
+     * @param mixed $entity The created entity
+     *
+     * @return mixed
+     */
+    protected function keepAndReturn($object, $entity)
+    {
+        foreach ($this->generateEntityHashes($object) as $hash) {
+            $this->importedEntities[$hash] = $entity;
+        }
+
+        return $entity;
     }
 
     /**

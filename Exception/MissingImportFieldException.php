@@ -8,8 +8,8 @@ namespace Tms\Bundle\ModelIOBundle\Exception;
 
 class MissingImportFieldException extends \Exception
 {
-    public function __construct()
+    public function __construct($field = null)
     {
-        parent::__construct('A missing Import field has been detected');
+        parent::__construct(sprintf('A missing Import field has been detected (%s)', $field));
     }
 }
