@@ -8,6 +8,7 @@ namespace Tms\Bundle\ModelIOBundle\Handler;
 
 use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
 use Tms\Bundle\ModelIOBundle\Exception\MissingImportFieldException;
+use Tms\Bundle\ModelIOBundle\Handler\MediaHandler;
 
 class ImportExportHandler
 {
@@ -20,6 +21,11 @@ class ImportExportHandler
     private $importExportManager;  // The Import/Export Manager
 
     /**
+     * @var MediaHandler
+     */
+    private $mediaHandler;
+
+    /**
      * Constructor
      *
      * @param Object              $objectManager
@@ -30,7 +36,7 @@ class ImportExportHandler
      * @param array               $aliases
      * @param ImportExportManager $importExportManager
      */
-    public function __construct($objectManager, $className, $modelName, $mode, array $fields, array $aliases, ImportExportManager $importExportManager)
+    public function __construct($objectManager, $className, $modelName, $mode, array $fields, array $aliases, ImportExportManager $importExportManager, $mediaHandler = null)
     {
         $this->objectManager       = $objectManager->getManager();
         $this->className           = $className;
@@ -39,6 +45,7 @@ class ImportExportHandler
         $this->fields              = $this->checkAndPrepareFields($fields);
         $this->aliases             = $aliases;
         $this->importExportManager = $importExportManager;
+        $this->mediaHandler        = $mediaHandler;
     }
 
     /**
@@ -175,6 +182,7 @@ class ImportExportHandler
             $classMetadata->setFieldValue($importedObject, $key, $data);
         }
         $associationMappings = $classMetadata->associationMappings;
+
         foreach ($associationMappings as $key => $properties) {
             if (!in_array($key, array_keys($this->fields))) {
                 continue;
@@ -192,6 +200,10 @@ class ImportExportHandler
                 }
                 $classMetadata->setFieldValue($importedObject, $key, $emptyValue);
             }
+        }
+
+        if (null !== $this->mediaHandler && $this->mediaHandler->isMedia($importedObject)) {
+            return $this->mediaHandler->importMedia($importedObject);
         }
 
         return $importedObject;
