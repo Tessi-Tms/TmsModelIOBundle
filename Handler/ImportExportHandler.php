@@ -59,7 +59,7 @@ class ImportExportHandler
      *
      * @var array
      */
-    private $importedEntities;
+    static $importedEntities;
 
     /**
      * The Import/Export Manager.
@@ -94,8 +94,11 @@ class ImportExportHandler
         $this->mode = $mode;
         $this->fields = $this->checkAndPrepareFields($fields);
         $this->aliases = $aliases;
-        $this->importedEntities = array();
         $this->importExportManager = $importExportManager;
+
+        if (!is_array(self::$importedEntities)) {
+            self::$importedEntities = array();
+        }
     }
 
     /**
@@ -226,8 +229,9 @@ class ImportExportHandler
 
         // Retrieve an existing entity
         $entity = $this->retrieveEntity($object);
-        if ($entity instanceof $this->className) {
-            return $this->keepAndReturn($object, $entity);
+        if (! $entity instanceof $this->className) {
+            // Create a new entity
+            $entity = new $this->className();
         }
 
         // Check the object unicity
@@ -236,8 +240,8 @@ class ImportExportHandler
         // Extract the entity metadatas
         $classMetadata = $this->objectManager->getClassMetadata($this->className);
 
-        // Create a new entity
-        $entity = new $this->className();
+        // Save the new entity
+        $this->keep($object, $entity);
 
         // Set the value of simple fields
         foreach ($classMetadata->fieldMappings as $key => $fieldMapping) {
@@ -254,43 +258,29 @@ class ImportExportHandler
             $classMetadata->setFieldValue($entity, $key, $data);
         }
 
-        // Save and return the entity
-        return $this->keepAndReturn($object, $entity);
+        // Set the value of associated fields
+        foreach ($classMetadata->associationMappings as $key => $fieldMapping) {
+            if (!property_exists($object, $key)) {
+                continue;
+            }
 
+            if ($object->$key) {
+                $classMetadata->setFieldValue(
+                    $entity,
+                    $key,
+                    $this->importExportManager->importNoDeserialization(
+                        $object->$key,
+                        isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
+                        isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
+                    )
+                );
+            } else {
+                $classMetadata->setFieldValue($entity, $key, is_array($object->$key) ? array() : null);
+            }
+        }
 
-        //
-        // // Set the values of associated fields
-        // $associationMappings = $classMetadata->associationMappings;
-        // foreach ($associationMappings as $key => $properties) {
-        //     if (!in_array($key, array_keys($this->fields))) {
-        //         continue;
-        //     }
-        //
-        //     if (!property_exists($object, $key)) {
-        //         throw new MissingImportFieldException();
-        //     }
-        //
-        //     if ($object->$key) {
-        //         $classMetadata->setFieldValue(
-        //             $importedObject,
-        //             $key,
-        //             $this->importExportManager->importNoDeserialization(
-        //                 $object->$key,
-        //                 isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
-        //                 isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
-        //             )
-        //         );
-        //     } else {
-        //         $emptyValue = null;
-        //         if (is_array($object->$key)) {
-        //             $emptyValue = array();
-        //         }
-        //         $classMetadata->setFieldValue($importedObject, $key, $emptyValue);
-        //     }
-        // }
-        //
-        // // Return the created entity
-        // return $importedObject;
+        // Return the entity
+        return $entity;
     }
 
     /**
@@ -315,12 +305,14 @@ class ImportExportHandler
 
                     // Get the constraint fields and values
                     foreach ($value['columns'] as $column) {
+                        // Ignore null values
                         if (!isset($object->$column)) {
                             $fields = array();
 
                             break;
                         }
 
+                        // Set the constraint field value
                         $fields[$column] = $object->$column;
                     }
 
@@ -369,8 +361,8 @@ class ImportExportHandler
     {
         // Search in already created/funded entities
         foreach ($this->generateEntityHashes($object) as $hash) {
-            if (isset($this->importedEntities[$hash])) {
-                return $this->importedEntities[$hash];
+            if (isset(self::$importedEntities[$hash])) {
+                return self::$importedEntities[$hash];
             }
         }
 
@@ -417,11 +409,24 @@ class ImportExportHandler
     protected function checkUnicity($object)
     {
         foreach ($this->getUniqueConstraints($object) as $fields) {
-            $entity = $this->objectManager->getRepository($this->className)->findOneBy($fields);
+            $parameters = array();
+            foreach ($fields as $key => $value) {
+                // Ignore complexe values
+                if ($value instanceof \stdClass) {
+                    $parameters = array();
 
-            // Return the existing entity
-            if ($entity instanceof $this->className) {
-                throw new AlreadyExistingEntityException($this->className, $fields);
+                    break;
+                }
+
+                $parameters[$key] = $value;
+            }
+            if (!empty($parameters)) {
+                $entity = $this->objectManager->getRepository($this->className)->findOneBy($fields);
+
+                // Return the existing entity
+                if ($entity instanceof $this->className) {
+                    throw new AlreadyExistingEntityException($this->className, $fields);
+                }
             }
         }
 
@@ -457,6 +462,21 @@ class ImportExportHandler
     }
 
     /**
+     * Keep the entity in memory to avoid multiple loading.
+     *
+     * @param mixed $object The initial object
+     * @param mixed $entity The created entity
+     *
+     * @return mixed
+     */
+    protected function keep($object, $entity)
+    {
+        foreach ($this->generateEntityHashes($object) as $hash) {
+            self::$importedEntities[$hash] = $entity;
+        }
+    }
+
+    /**
      * Keep the entity in memory to avoid multiple loading and return it.
      *
      * @param mixed $object The initial object
@@ -466,9 +486,7 @@ class ImportExportHandler
      */
     protected function keepAndReturn($object, $entity)
     {
-        foreach ($this->generateEntityHashes($object) as $hash) {
-            $this->importedEntities[$hash] = $entity;
-        }
+        $this->keep($object, $entity);
 
         return $entity;
     }
