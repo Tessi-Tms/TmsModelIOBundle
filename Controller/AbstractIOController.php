@@ -50,7 +50,7 @@ abstract class AbstractIOController extends Controller
      */
     protected function import(Request $request, $entity, $formAction, $modelName, $mode, $redirectUrl, $removalAllowed)
     {
-        $form = $this->createForm(new ImportType($removalAllowed), $entity);
+        $form = $this->createForm(ImportType::class, $entity, array('remove_checkbox' => $removalAllowed));
 
         if ($request->getMethod() === 'POST') {
             $importExportManager = $this->get('tms_model_io.manager.import_export_manager');
