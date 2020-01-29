@@ -166,13 +166,14 @@ class ImportExportHandler
                 throw new MissingImportFieldException();
             }
 
+            $data = $this->transformData($object->$key, $fieldMapping['type']);
+
             if ($key === 'id') {
-                return $this->objectManager->getRepository($this->className)->find($object->$key);
+                return $this->objectManager->getRepository($this->className)->find($data);
             }
 
-            $classMetadata->setFieldValue($importedObject, $key, $object->$key);
+            $classMetadata->setFieldValue($importedObject, $key, $data);
         }
-
         $associationMappings = $classMetadata->associationMappings;
         foreach ($associationMappings as $key => $properties) {
             if (!in_array($key, array_keys($this->fields))) {
@@ -241,5 +242,27 @@ class ImportExportHandler
         }
 
         return $preparedFields;
+    }
+
+    /**
+     * Transform data
+     *
+     * @param mixed $data the data to transformed
+     *
+     * @return mixed the data transformed
+     */
+    private function transformData($data, $type)
+    {
+        // Transform stdClass to array
+        if ($data instanceof \stdClass) {
+           $data = (array) $data;
+        }
+
+        // Transform to DateTime
+        if ($type === 'datetime' && $data !== null && isset($data['date'])) {
+            $data = new \DateTime($data['date'], new \DateTimeZone($data['timezone']));
+        }
+
+        return $data;
     }
 }
