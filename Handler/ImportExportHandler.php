@@ -248,14 +248,7 @@ class ImportExportHandler
             if (!property_exists($object, $key)) {
                 continue;
             }
-
-            // Transform stdClass to data
-            $data = $object->$key;
-            if ($data instanceof \stdClass) {
-                $data = (array) $data;
-            }
-
-            $classMetadata->setFieldValue($entity, $key, $data);
+            $classMetadata->setFieldValue($entity, $key, $this->transformData($object->$key, $fieldMapping['type']));
         }
 
         // Set the value of associated fields
@@ -543,5 +536,27 @@ class ImportExportHandler
         }
 
         return $preparedFields;
+    }
+
+    /**
+     * Transform data
+     *
+     * @param mixed $data the data to transformed
+     *
+     * @return mixed the data transformed
+     */
+    private function transformData($data, $type)
+    {
+        // Transform stdClass to array
+        if ($data instanceof \stdClass) {
+           $data = (array) $data;
+        }
+
+        // Transform to DateTime
+        if ($type === 'datetime' && $data !== null && isset($data['date'])) {
+            $data = new \DateTime($data['date'], new \DateTimeZone($data['timezone']));
+        }
+
+        return $data;
     }
 }
