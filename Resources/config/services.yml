@@ -4,6 +4,11 @@ services:
         arguments:
             - '%import_directory%'
 
+    tms_model_io.handler.media_handler:
+        class: Tms\Bundle\ModelIOBundle\Handler\MediaHandler
+        arguments:
+            - '@tms_media_client.storage_provider.tms_media'
+
     tms_model_io.form.type.import:
         class: Tms\Bundle\ModelIOBundle\Form\Type\ImportType
         tags:
@@ -24,6 +29,7 @@ services:
             - null
             - null
             - '@tms_model_io.manager.import_export_manager'
+            - '@?tms_model_io.handler.media_handler'
         abstract: true
         public: false
 

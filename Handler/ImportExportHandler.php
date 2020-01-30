@@ -9,6 +9,7 @@ namespace Tms\Bundle\ModelIOBundle\Handler;
 use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
 use Tms\Bundle\ModelIOBundle\Exception\AlreadyExistingEntityException;
 use Tms\Bundle\ModelIOBundle\Exception\MissingImportFieldException;
+use Tms\Bundle\ModelIOBundle\Handler\MediaHandler;
 
 class ImportExportHandler
 {
@@ -69,6 +70,13 @@ class ImportExportHandler
     private $importExportManager;
 
     /**
+     * Instance of MediaHandler.
+     *
+     * @var MediaHandler
+     */
+    private $mediaHandler;
+
+    /**
      * Constructor.
      *
      * @param Object              $objectManager
@@ -78,6 +86,7 @@ class ImportExportHandler
      * @param array               $fields
      * @param array               $aliases
      * @param ImportExportManager $importExportManager
+     * @param MediaHandler        $mediaHandler
      */
     public function __construct(
         $objectManager,
@@ -86,7 +95,8 @@ class ImportExportHandler
         $mode,
         array $fields,
         array $aliases,
-        ImportExportManager $importExportManager
+        ImportExportManager $importExportManager,
+        MediaHandler $mediaHandler = null
     ) {
         $this->objectManager = $objectManager->getManager();
         $this->className = $className;
@@ -95,6 +105,7 @@ class ImportExportHandler
         $this->fields = $this->checkAndPrepareFields($fields);
         $this->aliases = $aliases;
         $this->importExportManager = $importExportManager;
+        $this->mediaHandler = $mediaHandler;
 
         if (!is_array(self::$importedEntities)) {
             self::$importedEntities = array();
@@ -270,6 +281,11 @@ class ImportExportHandler
             } else {
                 $classMetadata->setFieldValue($entity, $key, is_array($object->$key) ? array() : null);
             }
+        }
+
+        // Handle the specific case of Media
+        if (null !== $this->mediaHandler && $this->mediaHandler->isMedia($entity)) {
+            return $this->mediaHandler->importMedia($entity);
         }
 
         // Return the entity
