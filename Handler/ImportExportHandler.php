@@ -10,6 +10,7 @@ use Tms\Bundle\ModelIOBundle\Manager\ImportExportManager;
 use Tms\Bundle\ModelIOBundle\Exception\AlreadyExistingEntityException;
 use Tms\Bundle\ModelIOBundle\Exception\MissingImportFieldException;
 use Tms\Bundle\ModelIOBundle\Handler\MediaHandler;
+use Doctrine\ORM\Mapping\ClassMetadata;
 
 class ImportExportHandler
 {
@@ -269,15 +270,32 @@ class ImportExportHandler
             }
 
             if ($object->$key) {
-                $classMetadata->setFieldValue(
-                    $entity,
-                    $key,
-                    $this->importExportManager->importNoDeserialization(
-                        $object->$key,
-                        isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
-                        isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
-                    )
+                // Create the associated entities
+                $associatedEntities = $this->importExportManager->importNoDeserialization(
+                    $object->$key,
+                    isset($this->fields[$key]['model']) ? $this->fields[$key]['model'] : $key,
+                    isset($this->fields[$key]['mode']) ? $this->fields[$key]['mode'] : 'default'
                 );
+
+                // Associate the new entities
+                $classMetadata->setFieldValue($entity, $key, $associatedEntities);
+
+                // Update associated entities sides
+                if (!is_array($associatedEntities)) {
+                    $associatedEntities = array($associatedEntities);
+                }
+
+                // Handle OneToOne and OneToMany associations
+                if (isset($fieldMapping['mappedBy'])) {
+                    foreach ($associatedEntities as $associatedEntity) {
+                        $this
+                            ->objectManager
+                            ->getClassMetadata(get_class($associatedEntity))
+                            ->setFieldValue($associatedEntity, $fieldMapping['mappedBy'], $entity);
+                    }
+                } else {
+                    dump($fieldMapping);die;
+                }
             } else {
                 $classMetadata->setFieldValue($entity, $key, is_array($object->$key) ? array() : null);
             }
@@ -291,6 +309,8 @@ class ImportExportHandler
         // Return the entity
         return $entity;
     }
+
+
 
     /**
      * Get the unique constraints of an object.
