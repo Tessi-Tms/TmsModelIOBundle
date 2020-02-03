@@ -192,7 +192,26 @@ class ImportExportHandler
             }
 
             if ($object->$key) {
-                $classMetadata->setFieldValue($importedObject, $key, $this->importExportManager->importNoDeserialization($object->$key, $key, $this->fields[$key] ? $this->fields[$key] : 'default'));
+                // Create the associated entities
+                $associatedEntities = $this->importExportManager->importNoDeserialization($object->$key, $key, $this->fields[$key] ? $this->fields[$key] : 'default');
+
+                // Associate the new entities
+                $classMetadata->setFieldValue($importedObject, $key, $associatedEntities);
+
+                // Update associated entities sides
+                if (!is_array($associatedEntities)) {
+                    $associatedEntities = array($associatedEntities);
+                }
+
+                // Handle OneToOne and OneToMany associations
+                if (isset($properties['mappedBy'])) {
+                    foreach ($associatedEntities as $associatedEntity) {
+                        $this
+                            ->objectManager
+                            ->getClassMetadata(get_class($associatedEntity))
+                            ->setFieldValue($associatedEntity, $properties['mappedBy'], $importedObject);
+                    }
+                }
             } else {
                 $emptyValue = null;
                 if (is_array($object->$key)) {
